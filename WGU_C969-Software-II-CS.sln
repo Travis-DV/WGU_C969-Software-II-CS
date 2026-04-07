@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WGU_C968-Software-I-CS", "WGU_C968-Software-I-CS\WGU_C968-Software-I-CS.csproj", "{6ADF1EAF-FD71-4A51-9D9B-ABF6F3A93D61}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WGU_C969-Software-II-CS", "WGU_C969-Software-II-CS\WGU_C969-Software-II-CS.csproj", "{6ADF1EAF-FD71-4A51-9D9B-ABF6F3A93D61}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
