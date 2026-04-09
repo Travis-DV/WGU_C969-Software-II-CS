@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Globalization;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -19,5 +20,14 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+    }
+
+    private void NewCustomerClicked(object sender, RoutedEventArgs e)
+    {
+        CultureInfo culture = new CultureInfo("es-ES");
+        
+        CustomerForm newCustomer = new CustomerForm(0, "Test", culture);
+        newCustomer.Owner = this;
+        newCustomer.Show();
     }
 }
