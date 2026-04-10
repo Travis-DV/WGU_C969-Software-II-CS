@@ -1,33 +1,50 @@
 ﻿using System.Globalization;
-using System.Text;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace WGU_C969_Software_II_CS;
 
 /// <summary>
 /// Interaction logic for MainWindow.xaml
 /// </summary>
-public partial class MainWindow : Window
+public partial class MainWindow
 {
     public MainWindow()
     {
         InitializeComponent();
+        
+        if (CultureInfo.CurrentCulture.Name.Contains("en"))
+        {
+            this.LanguagesComboBoxItemEn.IsSelected = true;
+        }
+        else if (CultureInfo.CurrentCulture.Name.Contains("es"))
+        {
+            this.LanguagesComboBoxItemEs.IsSelected = true;
+        }
     }
 
     private void NewCustomerClicked(object sender, RoutedEventArgs e)
     {
-        CultureInfo culture = new CultureInfo("es-ES");
-        
-        CustomerForm newCustomer = new CustomerForm(0, "Test", culture);
-        newCustomer.Owner = this;
+        CustomerForm newCustomer = new CustomerForm(0, "Test")
+        {
+            Owner = this
+        };
         newCustomer.Show();
+    }
+    
+    private void LanguageSelectedChanged(object sender, RoutedEventArgs e)
+    {
+        
+        CultureInfo culture;
+        if (this.LanguagesComboBox.SelectedItem.Equals(this.LanguagesComboBoxItemEs))
+        {
+            culture = new CultureInfo("es-ES");
+        } 
+        else
+        {
+            culture = new CultureInfo("en-US");
+        } 
+        
+        Thread.CurrentThread.CurrentUICulture = culture;
+        
     }
 }
