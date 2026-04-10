@@ -67,5 +67,32 @@ namespace WGU_C969_Software_II_CS.Resources {
                 return ResourceManager.GetString("FirstNameLabel", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Last Name.
+        /// </summary>
+        internal static string LastNameLabel {
+            get {
+                return ResourceManager.GetString("LastNameLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 1.
+        /// </summary>
+        internal static string PhoneNumberCountryCode {
+            get {
+                return ResourceManager.GetString("PhoneNumberCountryCode", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Phone Number Invalid.
+        /// </summary>
+        internal static string PhoneNumberInvalidError {
+            get {
+                return ResourceManager.GetString("PhoneNumberInvalidError", resourceCulture);
+            }
+        }
     }
 }

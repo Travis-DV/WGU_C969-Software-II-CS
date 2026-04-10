@@ -22,9 +22,14 @@
     
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="2*"></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
             <RowDefinition Height="*"></RowDefinition>
         </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"></ColumnDefinition>
+            <ColumnDefinition Width="*"></ColumnDefinition>
+        </Grid.ColumnDefinitions>
         <!--
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*">
@@ -32,33 +37,47 @@
             <ColumnDefinition Width="*"></ColumnDefinition>
         </Grid.ColumnDefinitions>
         -->
-        <GroupBox x:Name="FirstNameGroupBox" Grid.Row="0">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"></ColumnDefinition>
-                    <ColumnDefinition Width="*"></ColumnDefinition>
-                </Grid.ColumnDefinitions>
+
             
-                <Label x:Name="FirstNameLabel" 
-                       Grid.Column="0"
-                       HorizontalAlignment="Right" VerticalAlignment="Center" 
-                       Margin="12,0">
-                    First Name:
-                </Label>
-                <TextBox x:Name="FirstNameTextBox" 
-                         Grid.Column="1" 
-                         HorizontalAlignment="Left" VerticalAlignment="Center" 
-                         Margin="12,0" Width="200" 
-                         Style="{StaticResource TextBoxInError}">
-                    <TextBox.Text>
-                        <Binding Path=".FirstName"
-                                 UpdateSourceTrigger="Explicit" ValidatesOnDataErrors="True" NotifyOnValidationError="True">
-                            <Binding.ValidationRules><local:NameValidator></local:NameValidator></Binding.ValidationRules>
-                        </Binding>
-                    </TextBox.Text>
-                </TextBox>
-            </Grid>
-        </GroupBox>
-        <Button Grid.Row="1" Click="DoneButtonClicked">Click Me!</Button>
+        <Label x:Name="FirstNameLabel" 
+               Grid.Column="0" Grid.Row="0"
+               HorizontalAlignment="Right" VerticalAlignment="Center" 
+               Margin="12,0">
+            First Name:
+        </Label>
+        <TextBox x:Name="FirstNameTextBox" 
+                 Grid.Column="1" Grid.Row="0"
+                 HorizontalAlignment="Left" VerticalAlignment="Center" 
+                 Margin="12,0" Width="200" 
+                 Style="{StaticResource TextBoxInError}">
+            <TextBox.Text>
+                <Binding Path=".FirstName"
+                         UpdateSourceTrigger="Explicit" ValidatesOnDataErrors="True" NotifyOnValidationError="True">
+                    <Binding.ValidationRules><local:NameValidator></local:NameValidator></Binding.ValidationRules>
+                </Binding>
+            </TextBox.Text>
+        </TextBox>
+
+    
+        <Label x:Name="LastNameLabel" 
+               Grid.Column="0" Grid.Row="1"
+               HorizontalAlignment="Right" VerticalAlignment="Center" 
+               Margin="12,0">
+            Last Name:
+        </Label>
+        <TextBox x:Name="LastNameTextBox" 
+                 Grid.Column="1" Grid.Row="1"
+                 HorizontalAlignment="Left" VerticalAlignment="Center" 
+                 Margin="12,0" Width="200" 
+                 Style="{StaticResource TextBoxInError}">
+            <TextBox.Text>
+                <Binding Path=".LastName"
+                         UpdateSourceTrigger="Explicit" ValidatesOnDataErrors="True" NotifyOnValidationError="True">
+                    <Binding.ValidationRules><local:NameValidator></local:NameValidator></Binding.ValidationRules>
+                </Binding>
+            </TextBox.Text>
+        </TextBox>
+        <Button Grid.Row="2" Grid.ColumnSpan="2"
+                Click="DoneButtonClicked">Click Me!</Button>
     </Grid>
 </Window>

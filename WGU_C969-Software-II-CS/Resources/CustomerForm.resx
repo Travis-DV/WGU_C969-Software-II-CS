@@ -21,4 +21,13 @@
     <data name="FirstNameLabel" xml:space="preserve">
         <value>First Name</value>
     </data>
+    <data name="LastNameLabel" xml:space="preserve">
+        <value>Last Name</value>
+    </data>
+    <data name="PhoneNumberCountryCode" xml:space="preserve">
+        <value>1</value>
+    </data>
+    <data name="PhoneNumberInvalidError" xml:space="preserve">
+        <value>Phone Number Invalid</value>
+    </data>
 </root>

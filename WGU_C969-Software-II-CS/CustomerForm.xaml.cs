@@ -9,13 +9,8 @@ namespace WGU_C969_Software_II_CS;
 public partial class CustomerForm : Window
 {
     public string FirstName { get; set; }
-
-    public CustomerForm()
-    {
-        InitializeComponent();
-        this.DataContext = this;
-        this.FirstName = "";
-    }
+    public string LastName { get; set; }
+    public PhoneClass phoneNumber { get; set; }
 
     public CustomerForm(int customerId, string currentUsername)
     {
@@ -23,7 +18,13 @@ public partial class CustomerForm : Window
         //testLabel.Content = WGU_C969_Software_II_CS.Resources.Localization.test;
         this.DataContext = this;
         this.FirstName = "";
-        this.FirstNameLabel.Content = WGU_C969_Software_II_CS.Resources.CustomerForm.FirstNameLabel;
+        this.LastName = "";
+        this.phoneNumber = new PhoneClass();
+        this.phoneNumber.ImportFromString("+100 (314) 478-9031");
+        this.phoneNumber.ImportFromString("13144789031");
+        this.phoneNumber.ImportFromString("+34 (314) 478-9031 asdf sf");
+        this.FirstNameLabel.Content = WGU_C969_Software_II_CS.Resources.CustomerForm.FirstNameLabel + ": ";
+        this.LastNameLabel.Content = WGU_C969_Software_II_CS.Resources.CustomerForm.LastNameLabel + ": ";
     }
 
     public void DoneButtonClicked(object sender, RoutedEventArgs e)
@@ -31,14 +32,8 @@ public partial class CustomerForm : Window
         BindingExpression firstNameBinding = FirstNameTextBox.GetBindingExpression(TextBox.TextProperty);
         firstNameBinding?.UpdateSource();
 
-        if (Validation.GetHasError(FirstNameTextBox))
-        {
-            Console.WriteLine("Failed");
-        }
-        else if (!Validation.GetHasError(FirstNameTextBox))
-        {
-            Console.WriteLine("Passed");
-        }
+        BindingExpression lastNameBinding = LastNameTextBox.GetBindingExpression(TextBox.TextProperty);
+        lastNameBinding?.UpdateSource();
     }
 }
 
@@ -48,7 +43,7 @@ public class NameValidator : ValidationRule
     {
         if (value.ToString().Length == 0)
         {
-            return new ValidationResult(false, "Name Required");
+            return new ValidationResult(false, "Required");
         }
 
         return ValidationResult.ValidResult;
