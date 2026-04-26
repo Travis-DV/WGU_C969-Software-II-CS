@@ -60,6 +60,51 @@ namespace WGU_C969_Software_II_CS.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Add Address.
+        /// </summary>
+        internal static string AddressAddButton {
+            get {
+                return ResourceManager.GetString("AddressAddButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Clear Address.
+        /// </summary>
+        internal static string AddressClearButton {
+            get {
+                return ResourceManager.GetString("AddressClearButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Address.
+        /// </summary>
+        internal static string AddressLabel {
+            get {
+                return ResourceManager.GetString("AddressLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Modify Address.
+        /// </summary>
+        internal static string AddressModButton {
+            get {
+                return ResourceManager.GetString("AddressModButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Done.
+        /// </summary>
+        internal static string DoneButton {
+            get {
+                return ResourceManager.GetString("DoneButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to First Name.
         /// </summary>
         internal static string FirstNameLabel {
@@ -92,6 +137,15 @@ namespace WGU_C969_Software_II_CS.Resources {
         internal static string PhoneNumberInvalidError {
             get {
                 return ResourceManager.GetString("PhoneNumberInvalidError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Phone Number.
+        /// </summary>
+        internal static string PhoneNumberLabel {
+            get {
+                return ResourceManager.GetString("PhoneNumberLabel", resourceCulture);
             }
         }
     }

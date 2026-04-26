@@ -23,4 +23,22 @@
     <data name="PhoneNumberInvalidError" xml:space="preserve">
         <value>Número de teléfono no válido</value>
     </data>
+    <data name="AddressLabel" xml:space="preserve">
+        <value>Dirección</value>
+    </data>
+    <data name="AddressAddButton" xml:space="preserve">
+        <value>Añadir Dirección</value>
+    </data>
+    <data name="AddressClearButton" xml:space="preserve">
+        <value>Borrar Dirección</value>
+    </data>
+    <data name="AddressModButton" xml:space="preserve">
+        <value>Modificar Dirección</value>
+    </data>
+    <data name="PhoneNumberLabel" xml:space="preserve">
+        <value>Número de Teléfono</value>
+    </data>
+    <data name="DoneButton" xml:space="preserve">
+        <value>Hecho</value>
+    </data>
 </root>

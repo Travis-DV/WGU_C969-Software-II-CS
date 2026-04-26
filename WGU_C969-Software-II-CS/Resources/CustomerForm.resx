@@ -30,4 +30,22 @@
     <data name="PhoneNumberInvalidError" xml:space="preserve">
         <value>Phone Number Invalid</value>
     </data>
+    <data name="AddressLabel" xml:space="preserve">
+        <value>Address</value>
+    </data>
+    <data name="AddressAddButton" xml:space="preserve">
+        <value>Add Address</value>
+    </data>
+    <data name="AddressModButton" xml:space="preserve">
+        <value>Modify Address</value>
+    </data>
+    <data name="AddressClearButton" xml:space="preserve">
+        <value>Clear Address</value>
+    </data>
+    <data name="PhoneNumberLabel" xml:space="preserve">
+        <value>Phone Number</value>
+    </data>
+    <data name="DoneButton" xml:space="preserve">
+        <value>Done</value>
+    </data>
 </root>

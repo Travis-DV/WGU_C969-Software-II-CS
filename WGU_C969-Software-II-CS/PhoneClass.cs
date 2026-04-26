@@ -1,33 +1,45 @@
-﻿namespace WGU_C969_Software_II_CS;
+﻿using System.Globalization;
+using System.Resources;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
 
-public class PhoneClass
+namespace WGU_C969_Software_II_CS;
+
+public class PhoneClass : ValidationRule
 {
     private int _countryCode;
     private int _regionCode;
     private int _prefix;
     private int _lineNumber;
 
-    public string ImportFromString(string input)
+    public override ValidationResult Validate(object value, CultureInfo cuture)
     {
-        string cleanString = "";
+        List<char> cleanString = new List<char>();
+        string input = value.ToString();
         
         foreach (char c in input)
         {
             if (int.TryParse(c.ToString(), out _))
             {
-                cleanString += c;
+                cleanString.Add(c);
             }
         }
         
-        if (cleanString.Length < 10)
+        if (cleanString.Count < 10)
         {
-            return WGU_C969_Software_II_CS.Resources.CustomerForm.PhoneNumberInvalidError;
+            return new ValidationResult(false, WGU_C969_Software_II_CS.Resources.CustomerForm.PhoneNumberInvalidError);
         }
-
+        
         string countryCodeString = "";
-        for (int i = 0; i < (cleanString.Length - 10); i++)
+        for (int i = 0; i < (cleanString.Count - 10); i++)
         {
             countryCodeString += cleanString[i];
+        }
+
+        for (int i = 0; i < countryCodeString.Length; i++)
+        {
+            cleanString.RemoveAt(0);
         }
 
         if (countryCodeString == "")
@@ -45,14 +57,13 @@ public class PhoneClass
         
         string lineNumberString = cleanString[6].ToString() +cleanString[7].ToString() + cleanString[8].ToString() + cleanString[9].ToString();
         this._lineNumber = int.Parse(lineNumberString);
-
-        return input;
+        
+        return new ValidationResult(true, this.ToString());
     }
 
     public static implicit operator string(PhoneClass phone)
     {
-        return phone._countryCode.ToString() + phone._regionCode.ToString() + phone._prefix.ToString() +
-               phone._lineNumber.ToString();
+        return phone._countryCode.ToString() + phone._regionCode.ToString() + phone._prefix.ToString() + phone._lineNumber.ToString();
     }
 
     public int this[PhoneParts phonePart]
