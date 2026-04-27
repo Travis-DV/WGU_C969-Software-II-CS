@@ -5,8 +5,144 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:local="clr-namespace:WGU_C969_Software_II_CS"
         mc:Ignorable="d"
-        Title="AddressFrom" Height="450" Width="800">
+        Title="AddressFrom" Height="550" Width="800">
+    <Window.Resources>
+        <Style x:Key="ControlInError" TargetType="{x:Type Control}">
+            <Style.Triggers>
+                <Trigger Property="Validation.HasError" Value="true">
+                    <Setter Property="ToolTip"
+                            Value="{Binding RelativeSource={x:Static RelativeSource.Self},
+                              Path=(Validation.Errors)[0].ErrorContent}"/>
+                    <Setter Property="BorderBrush" Value="Red"/>
+                    <Setter Property="BorderThickness" Value="2"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+    
     <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="2*"/>
+            <RowDefinition Height="2*"/>
+            <RowDefinition Height="3*"/>
+            <RowDefinition Height="2*"/>
+            <RowDefinition Height="2*"/>
+            <RowDefinition Height="2*"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
         
+        <Label x:Name="AddressOneLabel" 
+               Grid.Column="0" Grid.Row="0"
+               HorizontalAlignment="Right" VerticalAlignment="Center" 
+               Margin="12,0">
+            AddressOneLabel
+        </Label>
+        <TextBox x:Name="AddressOneTextBox" 
+                 Grid.Column="1" Grid.Row="0"
+                 HorizontalAlignment="Left" VerticalAlignment="Center" 
+                 Margin="12,0" Width="200" 
+                 Style="{StaticResource ControlInError}">
+            <TextBox.Text>
+                <Binding Path=".AddressOne"
+                         UpdateSourceTrigger="Explicit" ValidatesOnDataErrors="True" NotifyOnValidationError="True">
+                    <Binding.ValidationRules><local:BasicTextValidator></local:BasicTextValidator></Binding.ValidationRules>
+                </Binding>
+            </TextBox.Text>
+        </TextBox>
+    
+        <Label x:Name="AddressTwoLabel" 
+               Grid.Column="0" Grid.Row="1"
+               HorizontalAlignment="Right" VerticalAlignment="Center" 
+               Margin="12,0">
+            AddressTwoLabel
+        </Label>
+        <TextBox x:Name="AddressTwoTextBox" 
+                 Grid.Column="1" Grid.Row="1"
+                 HorizontalAlignment="Left" VerticalAlignment="Center" 
+                 Margin="12,0" Width="200" >
+        </TextBox>
+        
+        <GroupBox Grid.ColumnSpan="3" Grid.Row="2" BorderThickness="0" Margin="0" Padding="0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="2*"></RowDefinition>
+                    <RowDefinition Height="*"></RowDefinition>
+                    <RowDefinition Height="*"></RowDefinition>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"></ColumnDefinition>
+                    <ColumnDefinition Width="*"></ColumnDefinition>
+                    <ColumnDefinition Width="*"></ColumnDefinition>
+                </Grid.ColumnDefinitions>
+                
+                <Label x:Name="CityLabel" 
+                       Grid.Column="0" Grid.Row="0"
+                       HorizontalAlignment="Right" VerticalAlignment="Center" 
+                       Margin="12,0">
+                    CityLabel
+                </Label>
+                <ComboBox x:Name="CitiesComboBox"
+                         Grid.Column="1" Grid.ColumnSpan="2" Grid.Row="0"
+                         HorizontalAlignment="Left" VerticalAlignment="Center" 
+                         Margin="12,0" Width="200"
+                         Style="{StaticResource ControlInError}"
+                         SelectedItem="{Binding .SelectedCity}">
+                </ComboBox>
+                
+                <Button x:Name="CityAddButton"
+                    Grid.Column="0" Grid.Row="1" Margin="2, 0"
+                        Click="CityAddButtonClicked">AddButton</Button>
+                <Button x:Name="CityModButton"
+                        Grid.Column="1" Grid.Row="1" Margin="2, 0"
+                        Click="CityModButtonClicked">ModButton</Button>
+                <Button x:Name="CityDeleteButton" 
+                        Grid.Column="2" Grid.Row="1" Margin="2, 0"
+                        Click="CityDeleteButtonClicked">DeleteButton</Button>
+            </Grid>
+        </GroupBox>
+        
+        <Label x:Name="PostalCodeLabel" 
+               Grid.Column="0" Grid.Row="3"
+               HorizontalAlignment="Right" VerticalAlignment="Center" 
+               Margin="12,0">
+            PostalCodeLabel
+        </Label>
+        <TextBox x:Name="PostalCodeTextBox" 
+                 Grid.Column="1" Grid.Row="3"
+                 HorizontalAlignment="Left" VerticalAlignment="Center" 
+                 Margin="12,0" Width="200" 
+                 Style="{StaticResource ControlInError}">
+            <TextBox.Text>
+                <Binding Path=".PostalCode"
+                         UpdateSourceTrigger="Explicit" ValidatesOnDataErrors="True" NotifyOnValidationError="True">
+                    <Binding.ValidationRules><local:BasicTextValidator></local:BasicTextValidator></Binding.ValidationRules>
+                </Binding>
+            </TextBox.Text>
+        </TextBox>
+        
+        <Label x:Name="HomePhoneLabel" 
+               Grid.Column="0" Grid.Row="4"
+               HorizontalAlignment="Right" VerticalAlignment="Center" 
+               Margin="12,0">
+            HomePhoneLabel
+        </Label>
+        <TextBox x:Name="HomePhoneTextBox" 
+                 Grid.Column="1" Grid.Row="4"
+                 HorizontalAlignment="Left" VerticalAlignment="Center" 
+                 Margin="12,0" Width="200" 
+                 Style="{StaticResource ControlInError}">
+            <TextBox.Text>
+                <Binding Path=".HomePhone"
+                         UpdateSourceTrigger="Explicit" ValidatesOnDataErrors="True" NotifyOnValidationError="True">
+                    <Binding.ValidationRules><local:PhoneClass></local:PhoneClass></Binding.ValidationRules>
+                </Binding>
+            </TextBox.Text>
+        </TextBox>
+        
+        <Button Grid.ColumnSpan="2" Grid.Row="5" x:Name="DoneButton" Margin="250, 25"
+                Click="DoneButtonClicked">DoneButton</Button>
     </Grid>
 </Window>

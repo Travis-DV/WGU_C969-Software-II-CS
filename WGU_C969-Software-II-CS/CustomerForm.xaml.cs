@@ -10,27 +10,24 @@ namespace WGU_C969_Software_II_CS;
 public partial class CustomerForm : Window
 {
     private int ID { get; }
-    private string currentUsername { get; }
+    private string CurrentUsername { get; }
     public string FirstName { get; set; }
     public string LastName { get; set; }
     private int AddressId { get; set; }
     private bool _AddressMod { get; set; }
     private bool AddressMod
     {
-        get
-        {
-            return _AddressMod;
-        }
+        get => _AddressMod;
         set
         {
             _AddressMod = value;
             if (value)
             {
-                this.AddressModButton.Content = WGU_C969_Software_II_CS.Resources.CustomerForm.AddressModButton;
+                this.AddressModButton.Content = WGU_C969_Software_II_CS.Resources.CustomerFormLocal.AddressModButton;
             }
             else if (!value)
             {
-                this.AddressModButton.Content = WGU_C969_Software_II_CS.Resources.CustomerForm.AddressAddButton;
+                this.AddressModButton.Content = WGU_C969_Software_II_CS.Resources.CustomerFormLocal.AddressAddButton;
             }
         } 
     }
@@ -43,14 +40,23 @@ public partial class CustomerForm : Window
         //testLabel.Content = WGU_C969_Software_II_CS.Resources.Localization.test;
         this.DataContext = this;
         this.ID = customerId;
-        this.currentUsername = currentUsername;
+        this.CurrentUsername = currentUsername;
         this.PhoneNumber = new PhoneClass();
         
-        Dictionary<DataEnum, string> databaseResults = DatabaseAPI.CheckID(this, this.ID);
+        Dictionary<DataEnum, string> databaseResults = DatabaseAPI.Pull(DataEnum.CustmerForm, this.ID);
 
-        string[] customerName = databaseResults[DataEnum.Name].Split(" ");
-        this.FirstName = customerName[0];
-        this.LastName = customerName[1];
+        if (databaseResults[DataEnum.Name] == "")
+        {
+            this.FirstName = "";
+            this.LastName = "";
+        }
+        else if (databaseResults[DataEnum.Name] != "")
+        {
+            string[] customerName = databaseResults[DataEnum.Name].Split(" ");
+            this.FirstName = customerName[0];
+            this.LastName = customerName[1];
+        }
+        
         int tempAID = -1;
         this.AddressMod = false;
         if (int.TryParse(databaseResults[DataEnum.AddressID], out tempAID))
@@ -58,22 +64,22 @@ public partial class CustomerForm : Window
             this.AddressId = tempAID;
             this.AddressMod = true;
         }
-        this.Address = new AddressFrom(this.AddressId, this.currentUsername);
+        this.Address = new AddressFrom(this.AddressId, this.CurrentUsername);
         this.AddressTextBox.Text = this.Address.ToString();
         this.PhoneNumber.Validate(databaseResults[DataEnum.PhoneNumber], CultureInfo.CurrentCulture);
         
         
-        this.FirstNameLabel.Content = WGU_C969_Software_II_CS.Resources.CustomerForm.FirstNameLabel + ": ";
-        this.LastNameLabel.Content = WGU_C969_Software_II_CS.Resources.CustomerForm.LastNameLabel + ": ";
-        this.AddressLabel.Content = WGU_C969_Software_II_CS.Resources.CustomerForm.AddressLabel + ": ";
-        this.AddressClearButton.Content = WGU_C969_Software_II_CS.Resources.CustomerForm.AddressClearButton;
-        this.PhoneNumberLabel.Content = WGU_C969_Software_II_CS.Resources.CustomerForm.PhoneNumberLabel + ": ";
-        this.DoneButton.Content = WGU_C969_Software_II_CS.Resources.CustomerForm.DoneButton;
+        this.FirstNameLabel.Content = WGU_C969_Software_II_CS.Resources.CustomerFormLocal.FirstNameLabel + ": ";
+        this.LastNameLabel.Content = WGU_C969_Software_II_CS.Resources.CustomerFormLocal.LastNameLabel + ": ";
+        this.AddressLabel.Content = WGU_C969_Software_II_CS.Resources.CustomerFormLocal.AddressLabel + ": ";
+        this.AddressClearButton.Content = WGU_C969_Software_II_CS.Resources.CustomerFormLocal.AddressClearButton;
+        this.PhoneNumberLabel.Content = WGU_C969_Software_II_CS.Resources.CustomerFormLocal.PhoneNumberLabel + ": ";
+        this.DoneButton.Content = WGU_C969_Software_II_CS.Resources.CustomerFormLocal.DoneButton;
     }
 
     public void AddressModButtonClicked(object sender, RoutedEventArgs e)
     {
-        this.Address = new AddressFrom(this.AddressId, this.currentUsername)
+        this.Address = new AddressFrom(this.AddressId, this.CurrentUsername)
         {
             Owner = this
         };
@@ -85,7 +91,7 @@ public partial class CustomerForm : Window
     {
         this.AddressId = -1;
         this.AddressMod = false;
-        this.Address = new AddressFrom(this.AddressId, this.currentUsername);
+        this.Address = new AddressFrom(this.AddressId, this.CurrentUsername);
         this.AddressTextBox.Text = this.Address.ToString();
     }
     
@@ -113,7 +119,6 @@ public partial class CustomerForm : Window
         {
             this.PhoneNumber.Validate(PhoneNumberTextBox.Text, CultureInfo.CurrentCulture);
             this.PhoneNumberTextBox.Text = this.PhoneNumber.ToString();
-            Console.WriteLine(this.PhoneNumber.ToString());
         }
 
         if (!firstNameBinding.HasError && !lastNameBinding.HasError && !addressBinding.HasError &&
@@ -136,10 +141,14 @@ public partial class CustomerForm : Window
     }
 }
 
-public class NameValidator : ValidationRule
+public class BasicTextValidator : ValidationRule
 {
     public override ValidationResult Validate(object value, CultureInfo cuture)
     {
+        if (value == null)
+        {
+            return new ValidationResult(false, "Value is null");
+        }
         if (value.ToString().Length == 0)
         {
             return new ValidationResult(false, "Required");

@@ -28,7 +28,7 @@ public class PhoneClass : ValidationRule
         
         if (cleanString.Count < 10)
         {
-            return new ValidationResult(false, WGU_C969_Software_II_CS.Resources.CustomerForm.PhoneNumberInvalidError);
+            return new ValidationResult(false, WGU_C969_Software_II_CS.Resources.CustomerFormLocal.PhoneNumberInvalidError);
         }
         
         string countryCodeString = "";
@@ -44,7 +44,7 @@ public class PhoneClass : ValidationRule
 
         if (countryCodeString == "")
         {
-            countryCodeString = WGU_C969_Software_II_CS.Resources.CustomerForm.PhoneNumberCountryCode;
+            countryCodeString = WGU_C969_Software_II_CS.Resources.CustomerFormLocal.PhoneNumberCountryCode;
         }
 
         this._countryCode = int.Parse(countryCodeString);

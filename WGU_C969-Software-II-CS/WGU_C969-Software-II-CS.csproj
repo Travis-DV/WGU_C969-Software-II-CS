@@ -10,17 +10,32 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <EmbeddedResource Update="Resources\CustomerForm.resx">
+      <EmbeddedResource Update="Resources\CustomerFormLocal.resx">
         <Generator>ResXFileCodeGenerator</Generator>
         <LastGenOutput>CustomerForm.Designer.cs</LastGenOutput>
+      </EmbeddedResource>
+      <EmbeddedResource Update="Resources\AddressFormLocal.resx">
+        <Generator>ResXFileCodeGenerator</Generator>
+        <LastGenOutput>AddressForm.Designer.cs</LastGenOutput>
+      </EmbeddedResource>
+      <EmbeddedResource Update="Resources\CustomerFormLocal.es-es.resx">
+        <DependentUpon>CustomerFormLocal.resx</DependentUpon>
+      </EmbeddedResource>
+      <EmbeddedResource Update="Resources\AddressFormLocal.es-es.resx">
+        <DependentUpon>AddressFormLocal.resx</DependentUpon>
       </EmbeddedResource>
     </ItemGroup>
 
     <ItemGroup>
-      <Compile Update="Resources\CustomerForm.Designer.cs">
+      <Compile Update="Resources\CustomerFormLocal.Designer.cs">
         <DesignTime>True</DesignTime>
         <AutoGen>True</AutoGen>
-        <DependentUpon>CustomerForm.resx</DependentUpon>
+        <DependentUpon>CustomerFormLocal.resx</DependentUpon>
+      </Compile>
+      <Compile Update="Resources\AddressFormLocal.Designer.cs">
+        <DesignTime>True</DesignTime>
+        <AutoGen>True</AutoGen>
+        <DependentUpon>AddressFormLocal.resx</DependentUpon>
       </Compile>
     </ItemGroup>
 

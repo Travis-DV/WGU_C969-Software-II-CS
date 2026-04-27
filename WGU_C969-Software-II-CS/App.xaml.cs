@@ -9,4 +9,5 @@ namespace WGU_C969_Software_II_CS;
 /// </summary>
 public partial class App : Application
 {
+    public delegate void UpdateComboBox();
 }
