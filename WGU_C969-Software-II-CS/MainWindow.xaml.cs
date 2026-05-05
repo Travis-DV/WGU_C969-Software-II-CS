@@ -18,8 +18,10 @@ public partial class MainWindow
         }
         else if (CultureInfo.CurrentCulture.Name.Contains("es"))
         {
-            this.LanguagesComboBoxItemEs.IsSelected = true;
+            this.LanguagesComboBoxItemEs.IsSelected = true; 
         }
+        
+        DatabaseAPI.CheckCreation();
     }
 
     private void NewCustomerClicked(object sender, RoutedEventArgs e)
@@ -48,3 +50,4 @@ public partial class MainWindow
         
     }
 }
+
