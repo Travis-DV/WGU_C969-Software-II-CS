@@ -20,21 +20,27 @@ public static class DatabaseAPI
             using (SQLiteConnection conn = new SQLiteConnection(connectionString))
             {
                 conn.Open();
-
-                string countryTable = @"CREATE TABLE country 
-                                           (countryId INTEGER PRIMARY KEY, country VARCHAR(50), 
-                                            createDate DATETIME, createdBy VARCHAR(40),
-                                            lastUpdate TIMESTAMP, lastUpdateBy VARCHAR(40))";
-                using (SQLiteCommand cmd = new SQLiteCommand(countryTable, conn))
+                
+                using (SQLiteCommand cmd = new SQLiteCommand(@"
+                                        CREATE TABLE country 
+                                       (
+                                           countryId INTEGER PRIMARY KEY, 
+                                           country VARCHAR(50), 
+                                           createDate DATETIME, 
+                                           createdBy VARCHAR(40),
+                                           lastUpdate TIMESTAMP, 
+                                           lastUpdateBy VARCHAR(40)
+                                       )", conn))
                 {
                     cmd.ExecuteNonQuery();
                 }
-                string insertSql = @"INSERT INTO country 
-                    (country, createDate, createdBy, lastUpdate, lastUpdateBy)
+                
+                
+                using (SQLiteCommand cmd = new SQLiteCommand(@"
+                    INSERT INTO country 
+                        (country, createDate, createdBy, lastUpdate, lastUpdateBy)
                     VALUES 
-                    (@country, @createDate, @createdBy, @lastUpdate, @lastUpdateBy)";
-
-                using (SQLiteCommand cmd = new SQLiteCommand(insertSql, conn))
+                        (@country, @createDate, @createdBy, @lastUpdate, @lastUpdateBy)", conn))
                 {
                     cmd.Parameters.AddWithValue("@country", "USA");
                     cmd.Parameters.AddWithValue("@createDate", DateTime.Now);
@@ -52,17 +58,6 @@ public static class DatabaseAPI
 
                     cmd.ExecuteNonQuery();
                 }
-                // using (SQLiteCommand cmd = new SQLiteCommand(insertSql, conn))
-                // {
-                //     cmd.Parameters.AddWithValue("@country", "Spain");
-                //     cmd.Parameters.AddWithValue("@createDate", DateTime.Now);
-                //     cmd.Parameters.AddWithValue("@createdBy", "admin");
-                //     cmd.Parameters.AddWithValue("@lastUpdate", DateTime.Now);
-                //     cmd.Parameters.AddWithValue("@lastUpdateBy", "admin");
-                //
-                //     cmd.ExecuteNonQuery();
-                // }
-                
                 using (SQLiteCommand cmd = new SQLiteCommand("SELECT * FROM  country", conn))
                 using (SQLiteDataReader reader = cmd.ExecuteReader())
                 {
@@ -77,6 +72,99 @@ public static class DatabaseAPI
                             $"By: {reader["lastUpdateBy"]}"
                         );
                     }
+                }
+                
+                using (SQLiteCommand cmd = new SQLiteCommand(@"
+                                    CREATE TABLE address 
+                                    (
+                                        addressId INTEGER PRIMARY KEY, 
+                                        address VARCHAR(50), 
+                                        address2 VARCHAR(50),
+                                        cityId INTEGER,
+                                        postalCode VARCHAR(10),
+                                        phone VARCHAR(20),
+                                        createDate DATETIME, 
+                                        createdBy VARCHAR(40),
+                                        lastUpdate TIMESTAMP, 
+                                        lastUpdateBy VARCHAR(40),
+                                        FOREIGN KEY (cityId) REFERENCES city(cityId) 
+                                    )", conn))
+                {
+                    cmd.ExecuteNonQuery();
+                }
+                
+                using (SQLiteCommand cmd = new SQLiteCommand(@"
+                                    CREATE TABLE city 
+                                    (
+                                        cityId INTEGER PRIMARY KEY, 
+                                        city VARCHAR(50), 
+                                        countryId INTEGER,
+                                        createDate DATE, 
+                                        createdBy VARCHAR(40),
+                                        lastUpdate TIMESTAMP, 
+                                        lastUpdateBy VARCHAR(40),
+                                        FOREIGN KEY (countryId) REFERENCES country(countryId) 
+                                    )", conn))
+                {
+                    cmd.ExecuteNonQuery();
+                }
+                
+                using (SQLiteCommand cmd = new SQLiteCommand(@"
+                                    CREATE TABLE customer 
+                                    (
+                                        customerId INTEGER PRIMARY KEY, 
+                                        customerName VARCHAR(50), 
+                                        addressId INTEGER,
+                                        active SMALLINT(1), 
+                                        createDate DATE, 
+                                        createdBy VARCHAR(40),
+                                        lastUpdate TIMESTAMP, 
+                                        lastUpdateBy VARCHAR(40),
+                                        FOREIGN KEY (addressId) REFERENCES address(addressId) 
+                                    )", conn))
+                {
+                    cmd.ExecuteNonQuery();
+                }
+                
+                using (SQLiteCommand cmd = new SQLiteCommand(@"
+                                    CREATE TABLE user 
+                                    (
+                                        userId INTEGER PRIMARY KEY, 
+                                        userName VARCHAR(50), 
+                                        password VARCHAR(50),
+                                        active SMALLINT(1), 
+                                        createDate DATE, 
+                                        createdBy VARCHAR(40),
+                                        lastUpdate TIMESTAMP, 
+                                        lastUpdateBy VARCHAR(40)
+                                    )", conn))
+                {
+                    cmd.ExecuteNonQuery();
+                }
+                
+                using (SQLiteCommand cmd = new SQLiteCommand(@"
+                                    CREATE TABLE appointment 
+                                    (
+                                        appointmentId INTEGER PRIMARY KEY, 
+                                        customerId INTEGER,
+                                        userId INTEGER,
+                                        title VARCHAR(50), 
+                                        description TEXT,
+                                        location TEXT,
+                                        contact TEXT,
+                                        type TEXT,
+                                        url VARCHAR(255),
+                                        start DATE,
+                                        end DATE,
+                                        createDate DATE, 
+                                        createdBy VARCHAR(40),
+                                        lastUpdate TIMESTAMP, 
+                                        lastUpdateBy VARCHAR(40),
+                                        FOREIGN KEY (customerId) REFERENCES customer(customerId),
+                                        FOREIGN KEY (userId) REFERENCES user(userId) 
+                                    )", conn))
+                {
+                    cmd.ExecuteNonQuery();
                 }
             }
         }
@@ -99,6 +187,10 @@ public static class DatabaseAPI
                 {
                     Console.WriteLine("Table: " + reader["name"]);
                 }
+            }
+            using (var cmd = new SQLiteCommand("PRAGMA foreign_keys = ON;", conn))
+            {
+                cmd.ExecuteNonQuery();
             }
         }
     }
