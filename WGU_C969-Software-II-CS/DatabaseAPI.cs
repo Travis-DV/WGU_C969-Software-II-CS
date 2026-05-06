@@ -5,12 +5,12 @@ namespace WGU_C969_Software_II_CS;
 
 public static class DatabaseAPI
 {
-    private static string DBName = "SchedulingSoftware";
+    public static string dbPath = $"{Directory.GetCurrentDirectory()}\\SchedulingSoftwareDatabase.db";
+    public static string connectionString = $"Data Source={dbPath};Version=3;";
 
     public static void CheckCreation()
     {
-        string dbPath = $"{Directory.GetCurrentDirectory()}\\SchedulingSoftwareDatabase.db";
-        string connectionString = $"Data Source={dbPath};Version=3;";
+        
         Console.WriteLine(Directory.GetCurrentDirectory());
         
         if (!File.Exists(dbPath))
@@ -26,9 +26,9 @@ public static class DatabaseAPI
                                        (
                                            countryId INTEGER PRIMARY KEY, 
                                            country VARCHAR(50), 
-                                           createDate DATETIME, 
+                                           createDate VARCHAR(20), 
                                            createdBy VARCHAR(40),
-                                           lastUpdate TIMESTAMP, 
+                                           lastUpdate VARCHAR(20), 
                                            lastUpdateBy VARCHAR(40)
                                        )", conn))
                 {
@@ -83,9 +83,9 @@ public static class DatabaseAPI
                                         cityId INTEGER,
                                         postalCode VARCHAR(10),
                                         phone VARCHAR(20),
-                                        createDate DATETIME, 
+                                        createDate VARCHAR(20), 
                                         createdBy VARCHAR(40),
-                                        lastUpdate TIMESTAMP, 
+                                        lastUpdate VARCHAR(20), 
                                         lastUpdateBy VARCHAR(40),
                                         FOREIGN KEY (cityId) REFERENCES city(cityId) 
                                     )", conn))
@@ -99,9 +99,9 @@ public static class DatabaseAPI
                                         cityId INTEGER PRIMARY KEY, 
                                         city VARCHAR(50), 
                                         countryId INTEGER,
-                                        createDate DATE, 
+                                        createDate VARCHAR(20), 
                                         createdBy VARCHAR(40),
-                                        lastUpdate TIMESTAMP, 
+                                        lastUpdate VARCHAR(20), 
                                         lastUpdateBy VARCHAR(40),
                                         FOREIGN KEY (countryId) REFERENCES country(countryId) 
                                     )", conn))
@@ -115,10 +115,11 @@ public static class DatabaseAPI
                                         customerId INTEGER PRIMARY KEY, 
                                         customerName VARCHAR(50), 
                                         addressId INTEGER,
+                                        phoneNumber VARCHAR(20),
                                         active SMALLINT(1), 
-                                        createDate DATE, 
+                                        createDate VARCHAR(20), 
                                         createdBy VARCHAR(40),
-                                        lastUpdate TIMESTAMP, 
+                                        lastUpdate VARCHAR(20), 
                                         lastUpdateBy VARCHAR(40),
                                         FOREIGN KEY (addressId) REFERENCES address(addressId) 
                                     )", conn))
@@ -133,9 +134,9 @@ public static class DatabaseAPI
                                         userName VARCHAR(50), 
                                         password VARCHAR(50),
                                         active SMALLINT(1), 
-                                        createDate DATE, 
+                                        createDate VARCHAR(20), 
                                         createdBy VARCHAR(40),
-                                        lastUpdate TIMESTAMP, 
+                                        lastUpdate VARCHAR(20), 
                                         lastUpdateBy VARCHAR(40)
                                     )", conn))
                 {
@@ -156,9 +157,9 @@ public static class DatabaseAPI
                                         url VARCHAR(255),
                                         start DATE,
                                         end DATE,
-                                        createDate DATE, 
+                                        createDate VARCHAR(20), 
                                         createdBy VARCHAR(40),
-                                        lastUpdate TIMESTAMP, 
+                                        lastUpdate VARCHAR(20), 
                                         lastUpdateBy VARCHAR(40),
                                         FOREIGN KEY (customerId) REFERENCES customer(customerId),
                                         FOREIGN KEY (userId) REFERENCES user(userId) 
@@ -194,72 +195,6 @@ public static class DatabaseAPI
             }
         }
     }
-    
-    public static Dictionary<DataEnum, string> Pull(DataEnum type, int ID)
-    {
-        Dictionary<DataEnum, string> output = new Dictionary<DataEnum, string> { { DataEnum.Error, "Error" } };
-        if (type == DataEnum.CustmerForm) 
-        {
-            if (false)  //if Id in db return data
-            {
-                
-            }
-            else //else not updating return empty
-            {
-                output.Remove(DataEnum.Error);
-                output.Add(DataEnum.Name, "");
-                output.Add(DataEnum.AddressID, "");
-                output.Add(DataEnum.PhoneNumber, "");
-            }
-            
-        }
-        if (type == DataEnum.AddressForm) 
-        {
-            if (false)  //if Id in db return data
-            {
-                
-            }
-            else //else not updating return empty
-            {
-                output.Remove(DataEnum.Error);
-                output.Add(DataEnum.AddressOne, "");
-                output.Add(DataEnum.AddressTwo, "");
-                output.Add(DataEnum.CityID, "");
-                output.Add(DataEnum.PostalCode, "");
-                output.Add(DataEnum.PhoneNumber, "");
-            }
-            
-        }
-
-        if (output.ContainsKey(DataEnum.Error))
-        {
-            throw new Exception("Database Error");
-        }
-        return output;
-    }
-
-    public static void Push(Dictionary<DataEnum, string> data)
-    {
-        //check if db has something with same ID mod if it does add new if it doesnt
-        //if id <0 add new one to the end
-        if (data.ContainsKey(DataEnum.CustmerForm))
-        {
-            
-        }
-        else if (data.ContainsKey(DataEnum.AddressForm))
-        {
-            
-        }
-        else if (data.ContainsKey(DataEnum.CityForm))
-        {
-            
-        }
-    }
-
-    public static void Remove(DataEnum type, int ID)
-    {
-        Console.WriteLine(ID.ToString());
-    }
 
     public static AdvancedList<CityForm> ReturnCities(string currentUser, App.UpdateComboBox ucb)
     {
@@ -279,32 +214,27 @@ public static class DatabaseAPI
 
         return output;
     }
-
-    public static void UpdateDB<T>(T type, Dictionary<DataEnum, string> data)
-    {
-        Console.WriteLine("Update DB");
-    }
 }
 
-
-public enum DataEnum
-{
-    //generic
-    Error,
-    ID,
-    CurrentUser,
-    PhoneNumber,
-    //CustomerForm
-    CustmerForm,
-    Name,
-    AddressID,
-    //AddressForm
-    AddressForm,
-    AddressOne,
-    AddressTwo,
-    CityID,
-    PostalCode,
-    //CityForm
-    CityForm,
-    CountryID
-}
+//
+// public enum DataEnum
+// {
+//     //generic
+//     Error,
+//     ID,
+//     CurrentUser,
+//     PhoneNumber,
+//     //CustomerForm
+//     CustmerForm,
+//     Name,
+//     AddressID,
+//     //AddressForm
+//     AddressForm,
+//     AddressOne,
+//     AddressTwo,
+//     CityID,
+//     PostalCode,
+//     //CityForm
+//     CityForm,
+//     CountryID
+// }

@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+﻿using System.Data.SQLite;
+using System.Globalization;
 using System.Windows;
 
 namespace WGU_C969_Software_II_CS;
@@ -26,7 +27,14 @@ public partial class MainWindow
 
     private void NewCustomerClicked(object sender, RoutedEventArgs e)
     {
-        CustomerForm newCustomer = new CustomerForm(0, "Test")
+        int nextId = 0;
+        using (SQLiteConnection conn = new SQLiteConnection(DatabaseAPI.connectionString))
+        using (SQLiteCommand cmd = new SQLiteCommand("SELECT IFNULL(MAX(cityId), 0) + 1 FROM city;", conn))
+        {
+            conn.Open();
+            nextId = Convert.ToInt32(cmd.ExecuteScalar());
+        }
+        CustomerForm newCustomer = new CustomerForm(nextId, "Test")
         {
             Owner = this
         };

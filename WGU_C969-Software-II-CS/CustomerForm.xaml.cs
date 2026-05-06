@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+﻿using System.Data.SQLite;
+using System.Globalization;
 using System.Resources;
 using System.Windows;
 using System.Windows.Controls;
@@ -43,30 +44,33 @@ public partial class CustomerForm : Window
         this.CurrentUsername = currentUsername;
         this.PhoneNumber = new PhoneClass();
         
-        Dictionary<DataEnum, string> databaseResults = DatabaseAPI.Pull(DataEnum.CustmerForm, this.ID);
+        using (SQLiteConnection conn = new SQLiteConnection(DatabaseAPI.connectionString))
+        using (SQLiteCommand cmd = new SQLiteCommand($"SELECT * FROM  customer WHERE customerId == {this.ID}", conn))
+        using (SQLiteDataReader reader = cmd.ExecuteReader())
+        {
+            conn.Open();
 
-        if (databaseResults[DataEnum.Name] == "")
-        {
-            this.FirstName = "";
-            this.LastName = "";
-        }
-        else if (databaseResults[DataEnum.Name] != "")
-        {
-            string[] customerName = databaseResults[DataEnum.Name].Split(" ");
+            if (!reader.Read())
+            {
+                this.FirstName = "";
+                this.LastName = "";
+                this.AddressMod = false;
+                this.AddressId = -1;
+                this.Address = new AddressFrom(this.AddressId, this.CurrentUsername);
+                this.AddressTextBox.Text = this.Address.ToString();
+                this.PhoneNumber.Validate("", CultureInfo.CurrentCulture);
+                return;
+            }
+            
+            string[] customerName = reader["customerName"].ToString().Split(" ");
             this.FirstName = customerName[0];
             this.LastName = customerName[1];
-        }
-        
-        int tempAID = -1;
-        this.AddressMod = false;
-        if (int.TryParse(databaseResults[DataEnum.AddressID], out tempAID))
-        {
-            this.AddressId = tempAID;
+            this.AddressId = int.Parse(reader["addressId"].ToString());
             this.AddressMod = true;
+            this.Address = new AddressFrom(this.AddressId, this.CurrentUsername);
+            this.AddressTextBox.Text = this.Address.ToString();
+            this.PhoneNumber.Validate(reader["phoneNumber"].ToString(), CultureInfo.CurrentCulture);
         }
-        this.Address = new AddressFrom(this.AddressId, this.CurrentUsername);
-        this.AddressTextBox.Text = this.Address.ToString();
-        this.PhoneNumber.Validate(databaseResults[DataEnum.PhoneNumber], CultureInfo.CurrentCulture);
         
         
         this.FirstNameLabel.Content = WGU_C969_Software_II_CS.Resources.CustomerFormLocal.FirstNameLabel + ": ";
@@ -132,12 +136,34 @@ public partial class CustomerForm : Window
 
     private void DataBaseUpdater()
     {
-        Dictionary<DataEnum, string> data = new Dictionary<DataEnum, string>();
-        data.Add(DataEnum.ID, this.ID.ToString());
-        data.Add(DataEnum.Name, this.FirstName + " " + this.LastName);
-        data.Add(DataEnum.AddressID, this.Address.ID.ToString());
-        data.Add(DataEnum.PhoneNumber, this.PhoneNumber);
-        DatabaseAPI.UpdateDB(this, data);
+        using (SQLiteConnection conn = new SQLiteConnection(DatabaseAPI.connectionString))
+        using (SQLiteCommand cmd = new SQLiteCommand(@"
+                INSERT INTO customer 
+                    (customerId, customerName, addressId, active, createDate, createdBy, lastUpdate, lastUpdateBy)
+                VALUES 
+                    (@customerId, @customerName, @addressId, @active, @createDate, @createdBy, @lastUpdate, @lastUpdateBy)
+                ON CONFLICT(customerId) DO UPDATE SET
+                    customerName = excluded.customerName, 
+                    addressId = excluded.addressId, 
+                    active = excluded.active, 
+                    createDate = createDate, 
+                    createdBy = createdBy, 
+                    lastUpdate = excluded.lastUpdate, 
+                    lastUpdateBy = excluded.lastUpdateBy", conn))
+        {
+            conn.Open();
+            
+            cmd.Parameters.AddWithValue("@customerId", this.ID);
+            cmd.Parameters.AddWithValue("@customerName", this.Name);
+            cmd.Parameters.AddWithValue("@addressId", this.AddressId);
+            cmd.Parameters.AddWithValue("@active", 1);
+            cmd.Parameters.AddWithValue("@createDate", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+            cmd.Parameters.AddWithValue("@createdBy", "admin");
+            cmd.Parameters.AddWithValue("@lastUpdate", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+            cmd.Parameters.AddWithValue("@lastUpdateBy", "admin");
+
+            cmd.ExecuteNonQuery();
+        }
     }
 }
 
