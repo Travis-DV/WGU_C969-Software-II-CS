@@ -33,17 +33,20 @@ public partial class AddressFrom
         using (SQLiteConnection conn = new SQLiteConnection(MainWindow.ConnectionString))
         {
             conn.Open();
-            using (SQLiteCommand cmd = new SQLiteCommand($"SELECT * FROM  address WHERE addressId == {this.ID}", conn))
-            using (SQLiteDataReader reader = cmd.ExecuteReader())
+            using (SQLiteCommand cmd = new SQLiteCommand($"SELECT * FROM  address WHERE addressId == @id", conn))
             {
-                if (reader.Read())
+                cmd.Parameters.AddWithValue("@id", this.ID);
+                using (SQLiteDataReader reader = cmd.ExecuteReader())
                 {
-                    this.AddressOne = reader["address"].ToString() ?? "";
-                    this.AddressTwo = reader["address2"].ToString() ?? "";
-                    this.SelectedCityId = int.Parse(reader["cityId"].ToString() ?? "-1");
-                    this.CitiesComboBox.SelectedIndex = this.SelectedCityId;
-                    this.PostalCode = reader["postalCode"].ToString() ?? "";
-                    this.HomePhone.Validate(reader["phone"].ToString() ?? "", CultureInfo.CurrentCulture);
+                    if (reader.Read())
+                    {
+                        this.AddressOne = reader["address"].ToString() ?? "";
+                        this.AddressTwo = reader["address2"].ToString() ?? "";
+                        this.SelectedCityId = int.Parse(reader["cityId"].ToString() ?? "-1");
+                        this.CitiesComboBox.SelectedIndex = this.SelectedCityId;
+                        this.PostalCode = reader["postalCode"].ToString() ?? "";
+                        this.HomePhone.Validate(reader["phone"].ToString() ?? "", CultureInfo.CurrentCulture);
+                    }
                 }
             }
         }
@@ -136,9 +139,10 @@ public partial class AddressFrom
             {
                 conn.Open();
                 using (SQLiteCommand cmd = new SQLiteCommand(
-                           $"DELETE FROM city WHERE cityId = {this.Cities[this.CitiesComboBox.SelectedIndex].ID};",
+                           $"DELETE FROM city WHERE cityId = @id;",
                            conn))
                 {
+                    cmd.Parameters.AddWithValue("@id", this.Cities[this.CitiesComboBox.SelectedIndex].ID);
                     cmd.ExecuteNonQuery();
                 }
             }
