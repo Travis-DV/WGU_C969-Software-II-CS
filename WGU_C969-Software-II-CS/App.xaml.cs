@@ -1,13 +1,12 @@
-﻿using System.Configuration;
-using System.Data;
-using System.Windows;
+﻿using System.IO;
 
 namespace WGU_C969_Software_II_CS;
 
 /// <summary>
 /// Interaction logic for App.xaml
 /// </summary>
-public partial class App : Application
+public partial class App
 {
-    public delegate void UpdateComboBox();
+    public delegate void UpdateComboBox(); 
+    
 }

@@ -1,17 +1,31 @@
-﻿using System.Windows;
+﻿namespace WGU_C969_Software_II_CS;
 
-namespace WGU_C969_Software_II_CS;
-
-public partial class CityForm : Window
+public partial class CityForm
 {
+    // ReSharper disable once InconsistentNaming
     public int ID { get; }
-    public string CityName { get; set; }
-    public int CountryId { get; set; }
+    // ReSharper disable once UnusedAutoPropertyAccessor.Local
+    private string CurrentUsername { get; set; }
+    // ReSharper disable once UnusedAutoPropertyAccessor.Local
+    private string CityName { get; set; } = "";
+    // ReSharper disable once UnusedAutoPropertyAccessor.Local
+    private int CountryId { get; set; }
     
     public CityForm(int cityId, string currentUsername)
     {
         InitializeComponent();
         this.ID = cityId;
+        this.CurrentUsername = currentUsername;
+    }
+    
+    public CityForm(int cityId, string currentUsername, string cityName, int countryId)
+    {
+        InitializeComponent();
+        this.ID = cityId;
+        this.CurrentUsername = currentUsername;
+
+        this.CityName = cityName;
+        this.CountryId = countryId;
     }
     
     public static implicit operator string(CityForm city)
@@ -21,6 +35,7 @@ public partial class CityForm : Window
     
     public override string ToString()
     {
+        // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
         if (this.CityName == null)
         {
             return "";

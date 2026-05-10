@@ -1,8 +1,5 @@
 ﻿using System.Globalization;
-using System.Resources;
-using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
 
 namespace WGU_C969_Software_II_CS;
 
@@ -13,22 +10,25 @@ public class PhoneClass : ValidationRule
     private int _prefix;
     private int _lineNumber;
 
-    public override ValidationResult Validate(object value, CultureInfo cuture)
+    public override ValidationResult Validate(object? value, CultureInfo cuture)
     {
         List<char> cleanString = new List<char>();
-        string input = value.ToString();
-        
-        foreach (char c in input)
+        if (value != null)
         {
-            if (int.TryParse(c.ToString(), out _))
+            string input = value.ToString() ?? "";
+        
+            foreach (char c in input)
             {
-                cleanString.Add(c);
+                if (int.TryParse(c.ToString(), out _))
+                {
+                    cleanString.Add(c);
+                }
             }
         }
-        
+
         if (cleanString.Count < 10)
         {
-            return new ValidationResult(false, WGU_C969_Software_II_CS.Resources.CustomerFormLocal.PhoneNumberInvalidError);
+            return new ValidationResult(false, Resources.CustomerFormLocal.PhoneNumberInvalidError);
         }
         
         string countryCodeString = "";
@@ -44,7 +44,7 @@ public class PhoneClass : ValidationRule
 
         if (countryCodeString == "")
         {
-            countryCodeString = WGU_C969_Software_II_CS.Resources.CustomerFormLocal.PhoneNumberCountryCode;
+            countryCodeString = Resources.CustomerFormLocal.PhoneNumberCountryCode;
         }
 
         this._countryCode = int.Parse(countryCodeString);
@@ -85,12 +85,6 @@ public class PhoneClass : ValidationRule
             }
         }
     }
-    // Returns greater than int32
-    // Why did I think I needed this?
-    // public static implicit operator int(PhoneClass phone)
-    // {
-    //     return int.Parse((string)phone);
-    // }
 
     public override string ToString()
     {

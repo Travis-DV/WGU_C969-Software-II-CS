@@ -1,17 +1,10 @@
-﻿using System.Runtime.CompilerServices;
+﻿namespace WGU_C969_Software_II_CS;
 
-namespace WGU_C969_Software_II_CS;
-
-public class AdvancedList<T> : List<T>
+public class AdvancedList<T>(App.UpdateComboBox comboBoxUpdater) : List<T>
 {
-    private App.UpdateComboBox ComboBoxUpdater { get; }
+    private App.UpdateComboBox ComboBoxUpdater { get; } = comboBoxUpdater;
 
-    public AdvancedList(App.UpdateComboBox comboBoxUpdater)
-    {
-        this.ComboBoxUpdater = comboBoxUpdater;
-    }
-
-    public T this[int index]
+    public new T this[int index]
     {
         get => base[index];
         set => base[index] = value;
@@ -20,11 +13,6 @@ public class AdvancedList<T> : List<T>
     public new void Add(T item)
     {
         base.Add(item);
-        if (this.ComboBoxUpdater == null)
-        {
-            Console.WriteLine("delegate null");
-            return;
-        }
         this.ComboBoxUpdater();
     }
     
