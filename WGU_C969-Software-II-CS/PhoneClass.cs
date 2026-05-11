@@ -65,6 +65,12 @@ public class PhoneClass : ValidationRule
     {
         return phone._countryCode.ToString() + phone._regionCode.ToString() + phone._prefix.ToString() + phone._lineNumber.ToString();
     }
+    public static implicit operator PhoneClass(string phone)
+    {
+        PhoneClass output = new PhoneClass();
+        output.Validate(phone, CultureInfo.CurrentCulture);
+        return output;
+    }
 
     public int this[PhoneParts phonePart]
     {

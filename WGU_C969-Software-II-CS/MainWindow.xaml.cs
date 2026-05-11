@@ -10,6 +10,8 @@ namespace WGU_C969_Software_II_CS;
 /// </summary>
 public partial class MainWindow
 {
+    public delegate void PropertyChangedDelegate(string name);
+    
     public MainWindow()
     {
         InitializeComponent();
@@ -33,11 +35,11 @@ public partial class MainWindow
         using SQLiteCommand cmd = new SQLiteCommand("SELECT IFNULL(MAX(customerId), 0) + 1 FROM customer;", conn);
         int nextId = Convert.ToInt32(cmd.ExecuteScalar());
         
-        CustomerForm newCustomer = new CustomerForm(nextId, "Test")
+        CustomerForm newCustomer = new CustomerForm(1, "Test")
         {
             Owner = this
         };
-        newCustomer.Show();
+        newCustomer.ShowDialog();
     }
     
     private void LanguageSelectedChanged(object sender, RoutedEventArgs e)

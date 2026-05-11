@@ -46,7 +46,7 @@
                  Margin="12,0" Width="200" 
                  Style="{StaticResource TextBoxInError}">
             <TextBox.Text>
-                <Binding Path=".FirstName"
+                <Binding Path="FirstName"
                          UpdateSourceTrigger="Explicit" ValidatesOnDataErrors="True" NotifyOnValidationError="True">
                     <Binding.ValidationRules><local:BasicTextValidator></local:BasicTextValidator></Binding.ValidationRules>
                 </Binding>
@@ -64,7 +64,7 @@
                  HorizontalAlignment="Left" VerticalAlignment="Center" 
                  Margin="12,0" Width="200">
             <TextBox.Text>
-                <Binding Path=".LastName"
+                <Binding Path="LastName"
                          UpdateSourceTrigger="Explicit" ValidatesOnDataErrors="True" NotifyOnValidationError="True">
                     <Binding.ValidationRules><local:BasicTextValidator></local:BasicTextValidator></Binding.ValidationRules>
                 </Binding>
@@ -98,7 +98,7 @@
                          Style="{StaticResource TextBoxInError}"
                          IsReadOnly="True">
                     <TextBox.Text>
-                        <Binding Path=".Address"
+                        <Binding Path="AddressString"
                                  UpdateSourceTrigger="Explicit" ValidatesOnDataErrors="True" NotifyOnValidationError="True">
                         </Binding>
                     </TextBox.Text>
@@ -125,7 +125,7 @@
                  Margin="12,0" Width="200" 
                  Style="{StaticResource TextBoxInError}">
             <TextBox.Text>
-                <Binding Path=".PhoneNumber"
+                <Binding Path="PhoneNumberString"
                          UpdateSourceTrigger="Explicit" ValidatesOnDataErrors="True" NotifyOnValidationError="True">
                     <Binding.ValidationRules><local:PhoneClass></local:PhoneClass></Binding.ValidationRules>
                 </Binding>

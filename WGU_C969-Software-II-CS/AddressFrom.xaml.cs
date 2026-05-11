@@ -1,4 +1,5 @@
-﻿using System.Data.SQLite;
+﻿using System.ComponentModel;
+using System.Data.SQLite;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
@@ -7,23 +8,81 @@ using System.Windows.Data;
 
 namespace WGU_C969_Software_II_CS;
 
-public partial class AddressFrom
+public partial class AddressFrom  : INotifyPropertyChanged
 {
-
     // ReSharper disable once InconsistentNaming
-    private int ID { get; }
+    public int ID { get; }
     private string CurrentUsername { get; }
-    private string AddressOne { get; set; } = "";
-    private string AddressTwo { get; set; } = "";
-    private int SelectedCityId { get; set; } = -1;
-    private string PostalCode { get; set; } = "";
+    
+    private string _addressOne = "";
+    public string AddressOne
+    {
+        get => _addressOne;
+        set
+        {
+            _addressOne = value;
+            OnPropertyChanged(nameof(AddressOne));
+        }
+    }
+    
+    private string _addressTwo = "";
+    public string AddressTwo
+    {
+        get => _addressTwo;
+        set
+        {
+            _addressTwo = value;
+            OnPropertyChanged(nameof(AddressTwo));
+        }
+    }
+    
+    private int _selectedCityId = -1;
+    public int SelectedCityId
+    {
+        get => _selectedCityId;
+        set
+        {
+            _selectedCityId = this.Cities[value].ID;
+            OnPropertyChanged(nameof(SelectedCityId));
+        }
+    }
+    
+    private string _postalCode = "";
+    public string PostalCode
+    {
+        get => _postalCode;
+        set
+        {
+            _postalCode = value;
+            OnPropertyChanged(nameof(PostalCode));
+        }
+    }
+    
     private PhoneClass HomePhone { get; set; }  = new PhoneClass();
+    public string PhoneNumberString
+    {
+        get
+        {
+            string output = HomePhone?.ToString() ?? "";
+            if (output == "+0 (0) 0-0")
+            {
+                return "";
+            }
+            return output;
+        }
+        set
+        {
+            HomePhone.Validate(value.ToString(), CultureInfo.CurrentCulture);
+            OnPropertyChanged(nameof(PhoneNumberString));
+            Console.WriteLine($"Phone Number String Change: {value}");
+        }
+    }
     private AdvancedList<CityForm> Cities { get; set; }
     
     public AddressFrom(int addressId, string currentUsername)
     {
-        InitializeComponent();
         this.DataContext = this;
+        InitializeComponent();
         
         this.ID = addressId;
         this.CurrentUsername = currentUsername;
@@ -33,7 +92,7 @@ public partial class AddressFrom
         using (SQLiteConnection conn = new SQLiteConnection(MainWindow.ConnectionString))
         {
             conn.Open();
-            using (SQLiteCommand cmd = new SQLiteCommand($"SELECT * FROM  address WHERE addressId == @id", conn))
+            using (SQLiteCommand cmd = new SQLiteCommand($"SELECT * FROM  address WHERE addressId = @id", conn))
             {
                 cmd.Parameters.AddWithValue("@id", this.ID);
                 using (SQLiteDataReader reader = cmd.ExecuteReader())
@@ -46,6 +105,7 @@ public partial class AddressFrom
                         this.CitiesComboBox.SelectedIndex = this.SelectedCityId;
                         this.PostalCode = reader["postalCode"].ToString() ?? "";
                         this.HomePhone.Validate(reader["phone"].ToString() ?? "", CultureInfo.CurrentCulture);
+                        OnPropertyChanged(nameof(PhoneNumberString));
                     }
                 }
             }
@@ -53,17 +113,13 @@ public partial class AddressFrom
             
 
         this.AddressOneLabel.Content = WGU_C969_Software_II_CS.Resources.AddressFormLocal.AddressOneLabel;
-        this.AddressOneTextBox.Text = this.AddressOne;
-        this.AddressTwoLabel.Content = WGU_C969_Software_II_CS.Resources.AddressFormLocal.AddressOneLabel;
-        this.AddressTwoTextBox.Text = this.AddressTwo;
+        this.AddressTwoLabel.Content = WGU_C969_Software_II_CS.Resources.AddressFormLocal.AddressTwoLabel;
         this.CityLabel.Content = WGU_C969_Software_II_CS.Resources.AddressFormLocal.CityLabel;
         this.CityAddButton.Content = WGU_C969_Software_II_CS.Resources.AddressFormLocal.CityAddButton;
         this.CityModButton.Content = WGU_C969_Software_II_CS.Resources.AddressFormLocal.CityModButton;
         this.CityDeleteButton.Content = WGU_C969_Software_II_CS.Resources.AddressFormLocal.CityDeleteButton;
         this.PostalCodeLabel.Content = WGU_C969_Software_II_CS.Resources.AddressFormLocal.PostalCodeLabel;
-        this.PostalCodeTextBox.Text = this.PostalCode;
         this.HomePhoneLabel.Content = WGU_C969_Software_II_CS.Resources.AddressFormLocal.HomePhoneLabel;
-        this.HomePhoneTextBox.Text = this.HomePhone.ToString();
         this.DoneButton.Content = WGU_C969_Software_II_CS.Resources.CustomerFormLocal.DoneButton;
     }
 
@@ -153,40 +209,89 @@ public partial class AddressFrom
     private void DoneButtonClicked(object sender, RoutedEventArgs e)
     {
         BindingExpression? addressOneBinding = AddressOneTextBox.GetBindingExpression(TextBox.TextProperty);
-        Console.WriteLine(this.AddressOne);
         addressOneBinding?.UpdateSource();
-        Console.WriteLine(this.AddressOne);
-        if (addressOneBinding is not { HasError: false }) { this.AddressOne = this.AddressOneTextBox.Text; }
         
-        if (this.AddressTwoTextBox.Text != "") { this.AddressTwo = this.AddressOneTextBox.Text; }
-        
-        Console.WriteLine(this.SelectedCityId.ToString());
         BindingExpression? citiesComboBinding = CitiesComboBox.GetBindingExpression(Selector.SelectedItemProperty);
-        if (CitiesComboBox.SelectedIndex == -1)
+        if (citiesComboBinding != null)
         {
-            if (citiesComboBinding != null)
+            if (CitiesComboBox.SelectedIndex < 0)
             {
                 Validation.MarkInvalid(citiesComboBinding,
                     new ValidationError(new ExceptionValidationRule(), citiesComboBinding));
             }
-        }
-        else
-        {
-            if (citiesComboBinding != null) { Validation.ClearInvalid(citiesComboBinding); }
+            else
+            {
+                Validation.ClearInvalid(citiesComboBinding);
+            }
         }
         
         BindingExpression? postalCodeBinding = PostalCodeTextBox.GetBindingExpression(TextBox.TextProperty);
         postalCodeBinding?.UpdateSource();
-        if (postalCodeBinding is not { HasError: false }) { this.PostalCode = this.PostalCodeTextBox.Text; }
-
-        if (HomePhoneTextBox.Text == "") return;
-        BindingExpression? homePhoneBinding = HomePhoneTextBox.GetBindingExpression(TextBox.TextProperty);
-        homePhoneBinding?.UpdateSource();
-        if (homePhoneBinding is not { HasError: false })
+        
+        if (HomePhoneTextBox.Text != "")
         {
-            this.HomePhone.Validate(HomePhoneTextBox.Text, CultureInfo.CurrentCulture);
-            this.HomePhoneTextBox.Text = this.HomePhone.ToString();
+            BindingExpression? homePhoneBinding = HomePhoneTextBox.GetBindingExpression(TextBox.TextProperty);
+            homePhoneBinding?.UpdateSource();
+            if (homePhoneBinding is { HasError: false })
+            {
+                this.HomePhone.Validate(HomePhoneTextBox.Text, CultureInfo.CurrentCulture);
+                this.HomePhoneTextBox.Text = this.HomePhone.ToString();
+            }
+            else
+            {
+                this.HomePhone.Validate("0 000 000 0000", CultureInfo.CurrentCulture);
+            }
         }
+
+        if (addressOneBinding is { HasError: true } ||
+            citiesComboBinding is { HasError: true } ||
+            postalCodeBinding is { HasError: true } ||
+            this.HomePhone.ToString() == "")
+        {
+            return;
+        }
+        
+        this.AddressOne = this.AddressOneTextBox.Text;
+        this.AddressTwo = this.AddressTwoTextBox.Text;
+        this.SelectedCityId = Cities[CitiesComboBox.SelectedIndex].ID;
+        this.PostalCode = this.PostalCodeTextBox.Text;
+        
+        this.DataBaseUpdater();
+        this.Close();
+    }
+    
+    private void DataBaseUpdater()
+    {
+        using SQLiteConnection conn = new SQLiteConnection(MainWindow.ConnectionString);
+        conn.Open();
+        // ReSharper disable once UseRawString
+        using SQLiteCommand cmd = new SQLiteCommand(@"
+                    INSERT INTO address 
+                        (addressId, address, address2, cityId, postalCode, phone, createDate, createdBy, lastUpdate, lastUpdateBy)
+                    VALUES 
+                        (@addressId, @address, @address2, @cityId, @postalCode, @phone, @createDate, @createdBy, @lastUpdate, @lastUpdateBy)
+                    ON CONFLICT(addressId) DO UPDATE SET
+                        address = excluded.address, 
+                        address2 = excluded.address2, 
+                        cityId = excluded.cityId, 
+                        postalCode = excluded.postalCode, 
+                        phone = excluded.phone, 
+                        createDate = createDate, 
+                        createdBy = createdBy, 
+                        lastUpdate = excluded.lastUpdate, 
+                        lastUpdateBy = excluded.lastUpdateBy", conn);
+        cmd.Parameters.AddWithValue("@addressId", this.ID);
+        cmd.Parameters.AddWithValue("@address", this.AddressOne);
+        cmd.Parameters.AddWithValue("@address2", this.AddressTwo);
+        cmd.Parameters.AddWithValue("@cityId", this.SelectedCityId);
+        cmd.Parameters.AddWithValue("@postalCode", this.PostalCode);
+        cmd.Parameters.AddWithValue("@phone", this.HomePhone);
+        cmd.Parameters.AddWithValue("@createDate", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+        cmd.Parameters.AddWithValue("@createdBy", "admin");
+        cmd.Parameters.AddWithValue("@lastUpdate", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+        cmd.Parameters.AddWithValue("@lastUpdateBy", "admin");
+
+        cmd.ExecuteNonQuery();
     }
     
     public override string ToString()
@@ -197,13 +302,9 @@ public partial class AddressFrom
             output += $", {AddressTwo}";
         }
         // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
-        if (this.Cities != null && this.Cities.Count > this.SelectedCityId && this.SelectedCityId > -1)
+        if (this.Cities != null && this.Cities.Count > this.SelectedCityId && this.SelectedCityId > -1 && this.PostalCode != "")
         {
-            output += $", {this.Cities[this.SelectedCityId]}";
-        }
-        if (this.PostalCode != "")
-        {
-            output += $", {this.PostalCode}";
+            output += $", {this.Cities[this.SelectedCityId]} {this.PostalCode}";
         }
         if (this.HomePhone.ToString() != "")
         {
@@ -212,6 +313,13 @@ public partial class AddressFrom
         }
 
         return output;
+    }
+    
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    protected void OnPropertyChanged(string name)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
 }
 
