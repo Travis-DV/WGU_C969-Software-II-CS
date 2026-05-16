@@ -8,10 +8,10 @@ using System.Windows.Data;
 
 namespace WGU_C969_Software_II_CS;
 
-public partial class AddressFrom  : INotifyPropertyChanged
+public partial class AddressFrom : INotifyPropertyChanged
 {
     // ReSharper disable once InconsistentNaming
-    public int ID { get; }
+    public int ID { get; init; }
     private string CurrentUsername { get; }
     
     private string _addressOne = "";
@@ -39,9 +39,27 @@ public partial class AddressFrom  : INotifyPropertyChanged
     private int _selectedCityId = -1;
     public int SelectedCityId
     {
-        get => _selectedCityId;
+        get
+        {
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
+            if (this.Cities == null)
+            {
+                return -1;
+            }
+            return this.Cities.FindIndex(c => c.ID == _selectedCityId);
+        }
         set
         {
+            if (value > this.Cities.Count)
+            {
+                int i = this.Cities.FindIndex(c => c.ID == value);
+                if (i >= 0)
+                {
+                    _selectedCityId = value;
+                    this.CitiesComboBox.SelectedIndex = i;
+                    return;
+                }
+            }
             _selectedCityId = this.Cities[value].ID;
             OnPropertyChanged(nameof(SelectedCityId));
         }
@@ -102,7 +120,7 @@ public partial class AddressFrom  : INotifyPropertyChanged
                         this.AddressOne = reader["address"].ToString() ?? "";
                         this.AddressTwo = reader["address2"].ToString() ?? "";
                         this.SelectedCityId = int.Parse(reader["cityId"].ToString() ?? "-1");
-                        this.CitiesComboBox.SelectedIndex = this.SelectedCityId;
+                        //this.CitiesComboBox.SelectedIndex = this.SelectedCityId;
                         this.PostalCode = reader["postalCode"].ToString() ?? "";
                         this.HomePhone.Validate(reader["phone"].ToString() ?? "", CultureInfo.CurrentCulture);
                         OnPropertyChanged(nameof(PhoneNumberString));
@@ -125,15 +143,15 @@ public partial class AddressFrom  : INotifyPropertyChanged
 
     private void ReadCities()
     {
+        this.Cities = new AdvancedList<CityForm>(this.RenderCitiesComboBox);
+        
         using SQLiteConnection conn = new SQLiteConnection(MainWindow.ConnectionString);
         conn.Open();
         using var cmd = new SQLiteCommand("SELECT * FROM city", conn);
         using var reader = cmd.ExecuteReader();
         while (reader.Read())
         {
-            this.Cities.Add(new CityForm(int.Parse(reader["cityId"].ToString() ?? ""), this.CurrentUsername, 
-                reader["city"].ToString() ?? "",
-                int.Parse(reader["countryId"].ToString() ?? "")));
+            this.Cities.Add(new CityForm(int.Parse(reader["cityId"].ToString() ?? ""), this.CurrentUsername));
         }
     }
     
@@ -150,13 +168,7 @@ public partial class AddressFrom  : INotifyPropertyChanged
         {
             Owner = this
         };
-        newCity.Show();
-        // DatabaseAPI.Push(new Dictionary<DataEnum, string>
-        // {
-        //     { DataEnum.ID, newCity.ID.ToString() },
-        //     { DataEnum.Name, newCity.CityName },
-        //     { DataEnum.CountryID, newCity.CountryId.ToString() }
-        // });
+        newCity.ShowDialog();
         this.ReadCities();
     }
 
@@ -176,7 +188,7 @@ public partial class AddressFrom  : INotifyPropertyChanged
 
     private void CityModButtonClicked(object sender, RoutedEventArgs e)
     {
-        CityPushButtonClicked(this.CitiesComboBox.SelectedIndex);
+        CityPushButtonClicked(this.Cities[this.CitiesComboBox.SelectedIndex].ID);
     }
 
     private void CityDeleteButtonClicked(object sender, RoutedEventArgs e)
@@ -211,7 +223,7 @@ public partial class AddressFrom  : INotifyPropertyChanged
         BindingExpression? addressOneBinding = AddressOneTextBox.GetBindingExpression(TextBox.TextProperty);
         addressOneBinding?.UpdateSource();
         
-        BindingExpression? citiesComboBinding = CitiesComboBox.GetBindingExpression(Selector.SelectedItemProperty);
+        BindingExpression? citiesComboBinding = CitiesComboBox.GetBindingExpression(Selector.SelectedIndexProperty);
         if (citiesComboBinding != null)
         {
             if (CitiesComboBox.SelectedIndex < 0)
@@ -223,6 +235,10 @@ public partial class AddressFrom  : INotifyPropertyChanged
             {
                 Validation.ClearInvalid(citiesComboBinding);
             }
+        }
+        else
+        {
+            throw new Exception("Failed to bind CitiesComboBox");
         }
         
         BindingExpression? postalCodeBinding = PostalCodeTextBox.GetBindingExpression(TextBox.TextProperty);
@@ -257,6 +273,7 @@ public partial class AddressFrom  : INotifyPropertyChanged
         this.PostalCode = this.PostalCodeTextBox.Text;
         
         this.DataBaseUpdater();
+        this.DialogResult = true;
         this.Close();
     }
     
@@ -283,13 +300,13 @@ public partial class AddressFrom  : INotifyPropertyChanged
         cmd.Parameters.AddWithValue("@addressId", this.ID);
         cmd.Parameters.AddWithValue("@address", this.AddressOne);
         cmd.Parameters.AddWithValue("@address2", this.AddressTwo);
-        cmd.Parameters.AddWithValue("@cityId", this.SelectedCityId);
+        cmd.Parameters.AddWithValue("@cityId", this._selectedCityId);
         cmd.Parameters.AddWithValue("@postalCode", this.PostalCode);
         cmd.Parameters.AddWithValue("@phone", this.HomePhone);
         cmd.Parameters.AddWithValue("@createDate", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
-        cmd.Parameters.AddWithValue("@createdBy", "admin");
+        cmd.Parameters.AddWithValue("@createdBy", this.CurrentUsername);
         cmd.Parameters.AddWithValue("@lastUpdate", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
-        cmd.Parameters.AddWithValue("@lastUpdateBy", "admin");
+        cmd.Parameters.AddWithValue("@lastUpdateBy", this.CurrentUsername);
 
         cmd.ExecuteNonQuery();
     }

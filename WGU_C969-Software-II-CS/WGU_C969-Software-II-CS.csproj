@@ -24,6 +24,10 @@
       <EmbeddedResource Update="Resources\AddressFormLocal.es-es.resx">
         <DependentUpon>AddressFormLocal.resx</DependentUpon>
       </EmbeddedResource>
+      <EmbeddedResource Update="Resources\CityFormLocal.resx">
+        <Generator>ResXFileCodeGenerator</Generator>
+        <LastGenOutput>CityFormLocal.Designer.cs</LastGenOutput>
+      </EmbeddedResource>
     </ItemGroup>
 
     <ItemGroup>
@@ -37,9 +41,15 @@
         <AutoGen>True</AutoGen>
         <DependentUpon>AddressFormLocal.resx</DependentUpon>
       </Compile>
+      <Compile Update="Resources\CityFormLocal.Designer.cs">
+        <DesignTime>True</DesignTime>
+        <AutoGen>True</AutoGen>
+        <DependentUpon>CityFormLocal.resx</DependentUpon>
+      </Compile>
     </ItemGroup>
 
     <ItemGroup>
+      <PackageReference Include="JetBrains.Annotations" Version="2025.2.4" />
       <PackageReference Include="SourceGear.sqlite3" Version="3.50.4.5" />
       <PackageReference Include="System.Data.SQLite" Version="2.0.3" />
     </ItemGroup>

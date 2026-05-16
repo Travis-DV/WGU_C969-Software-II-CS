@@ -11,6 +11,8 @@ namespace WGU_C969_Software_II_CS;
 public partial class MainWindow
 {
     public delegate void PropertyChangedDelegate(string name);
+
+    private string CurrentUsername = "Admin";
     
     public MainWindow()
     {
@@ -25,7 +27,7 @@ public partial class MainWindow
             this.LanguagesComboBoxItemEs.IsSelected = true; 
         }
         
-        MainWindow.CheckCreation();
+        MainWindow.CheckCreation(this.CurrentUsername);
     }
 
     private void NewCustomerClicked(object sender, RoutedEventArgs e)
@@ -35,7 +37,7 @@ public partial class MainWindow
         using SQLiteCommand cmd = new SQLiteCommand("SELECT IFNULL(MAX(customerId), 0) + 1 FROM customer;", conn);
         int nextId = Convert.ToInt32(cmd.ExecuteScalar());
         
-        CustomerForm newCustomer = new CustomerForm(1, "Test")
+        CustomerForm newCustomer = new CustomerForm(1, this.CurrentUsername)
         {
             Owner = this
         };
@@ -63,7 +65,7 @@ public partial class MainWindow
     private static readonly string DbPath = $"{Directory.GetCurrentDirectory()}\\SchedulingSoftwareDatabase.db";
     public static readonly string ConnectionString = $"Data Source={DbPath};Version=3;";
 
-    private static void CheckCreation()
+    private static void CheckCreation(string currentUsername)
     {
         
         Console.WriteLine(Directory.GetCurrentDirectory());
@@ -98,17 +100,17 @@ public partial class MainWindow
             {
                 cmd.Parameters.AddWithValue("@country", "USA");
                 cmd.Parameters.AddWithValue("@createDate", DateTime.Now);
-                cmd.Parameters.AddWithValue("@createdBy", "admin");
+                cmd.Parameters.AddWithValue("@createdBy", currentUsername);
                 cmd.Parameters.AddWithValue("@lastUpdate", DateTime.Now);
-                cmd.Parameters.AddWithValue("@lastUpdateBy", "admin");
+                cmd.Parameters.AddWithValue("@lastUpdateBy", currentUsername);
 
                 cmd.ExecuteNonQuery();
                     
                 cmd.Parameters.AddWithValue("@country", "Spain");
                 cmd.Parameters.AddWithValue("@createDate", DateTime.Now);
-                cmd.Parameters.AddWithValue("@createdBy", "admin");
+                cmd.Parameters.AddWithValue("@createdBy", currentUsername);
                 cmd.Parameters.AddWithValue("@lastUpdate", DateTime.Now);
-                cmd.Parameters.AddWithValue("@lastUpdateBy", "admin");
+                cmd.Parameters.AddWithValue("@lastUpdateBy", currentUsername);
 
                 cmd.ExecuteNonQuery();
             }

@@ -11,7 +11,7 @@ namespace WGU_C969_Software_II_CS;
 public partial class CustomerForm : INotifyPropertyChanged
 {
     // ReSharper disable once InconsistentNaming
-    private int ID { get; }
+    private int ID { get; init; }
     private string CurrentUsername { get; }
 
     private string _firstName = "";
@@ -39,14 +39,14 @@ public partial class CustomerForm : INotifyPropertyChanged
     
     private int AddressId { get; set; }  = -1;
     // ReSharper disable once InconsistentNaming
-    private bool _AddressMod { get; set; }
+    //private bool _AddressMod { get; set; }
     private bool AddressMod
     {
         // ReSharper disable once UnusedMember.Local
-        get => _AddressMod;
+        //get => _AddressMod;
         set
         {
-            _AddressMod = value;
+            //_AddressMod = value;
             if (value)
             {
                 this.AddressModButton.Content = WGU_C969_Software_II_CS.Resources.CustomerFormLocal.AddressModButton;
@@ -71,11 +71,7 @@ public partial class CustomerForm : INotifyPropertyChanged
     public string AddressString
     {
         get => Address?.ToString() ?? "";
-        set
-        {
-            Console.WriteLine("AddressString Set LMAO");
-            OnPropertyChanged(nameof(AddressString));
-        }
+        set => OnPropertyChanged(nameof(AddressString));
     }
 
     private PhoneClass PhoneNumber { get; set; } = new PhoneClass();
@@ -94,7 +90,6 @@ public partial class CustomerForm : INotifyPropertyChanged
         {
             PhoneNumber.Validate(value.ToString(), CultureInfo.CurrentCulture);
             OnPropertyChanged(nameof(PhoneNumberString));
-            Console.WriteLine($"Phone Number String Change: {value}");
         }
     }
 
@@ -154,7 +149,12 @@ public partial class CustomerForm : INotifyPropertyChanged
             Owner = this
         };
         this.Address.ShowDialog();
-        OnPropertyChanged(nameof(AddressString));
+        
+        if (this.Address is {DialogResult: true})
+        {
+            OnPropertyChanged(nameof(AddressString));
+            this.AddressMod = true;
+        }
     }
     
     private void AddressClearButtonClicked(object sender, RoutedEventArgs e)
@@ -205,6 +205,7 @@ public partial class CustomerForm : INotifyPropertyChanged
         this.PhoneNumberTextBox.Text = this.PhoneNumber.ToString();
         
         this.DataBaseUpdater();
+        this.DialogResult = true;
         this.Close();
     }
 
@@ -232,9 +233,9 @@ public partial class CustomerForm : INotifyPropertyChanged
         cmd.Parameters.AddWithValue("@phoneNumber", this.PhoneNumber);
         cmd.Parameters.AddWithValue("@active", 1);
         cmd.Parameters.AddWithValue("@createDate", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
-        cmd.Parameters.AddWithValue("@createdBy", "admin");
+        cmd.Parameters.AddWithValue("@createdBy", this.CurrentUsername);
         cmd.Parameters.AddWithValue("@lastUpdate", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
-        cmd.Parameters.AddWithValue("@lastUpdateBy", "admin");
+        cmd.Parameters.AddWithValue("@lastUpdateBy", this.CurrentUsername);
 
         cmd.ExecuteNonQuery();
     }

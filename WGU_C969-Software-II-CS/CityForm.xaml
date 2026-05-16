@@ -6,7 +6,62 @@
         xmlns:local="clr-namespace:WGU_C969_Software_II_CS"
         mc:Ignorable="d"
         Title="CityForm" Height="450" Width="800">
+    <Window.Resources>
+        <Style x:Key="ControlInError" TargetType="{x:Type Control}">
+            <Style.Triggers>
+                <Trigger Property="Validation.HasError" Value="true">
+                    <Setter Property="ToolTip"
+                            Value="{Binding RelativeSource={x:Static RelativeSource.Self},
+                              Path=(Validation.Errors)[0].ErrorContent}"/>
+                    <Setter Property="BorderBrush" Value="Red"/>
+                    <Setter Property="BorderThickness" Value="2"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+    
     <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="3*" />
+            <RowDefinition Height="3*" />
+            <RowDefinition Height="2*" />
+        </Grid.RowDefinitions>
         
+        <Label x:Name="CityNameLabel" 
+               Grid.Column="0" Grid.Row="0"
+               HorizontalAlignment="Right" VerticalAlignment="Center" 
+               Margin="12,10">
+            CityNameLabel
+        </Label>
+        <TextBox x:Name="CityNameTextBox" 
+                 Grid.Column="1" Grid.Row="0"
+                 HorizontalAlignment="Left" VerticalAlignment="Center" 
+                 Margin="12,10" Width="200">
+            <TextBox.Text>
+                <Binding Path="CityName"
+                         UpdateSourceTrigger="Explicit" ValidatesOnDataErrors="True" NotifyOnValidationError="True">
+                    <Binding.ValidationRules><local:BasicTextValidator></local:BasicTextValidator></Binding.ValidationRules>
+                </Binding>
+            </TextBox.Text>
+        </TextBox>
+        <Label x:Name="CountryLabel" 
+               Grid.Column="0" Grid.Row="1"
+               HorizontalAlignment="Right" VerticalAlignment="Center" 
+               Margin="12,10">
+            CountryLabel
+        </Label>
+        <ComboBox x:Name="CountriesComboBox"
+                  Grid.Column="1" Grid.Row="1"
+                  HorizontalAlignment="Left" VerticalAlignment="Center" 
+                  Margin="12,10" Width="200"
+                  Style="{StaticResource ControlInError}"
+                  SelectedIndex="{Binding SelectedCountryIndex}">
+        </ComboBox>
+        <Button Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="2" x:Name="DoneButton" Margin="250, 25"
+                Click="DoneButtonClicked">DoneButton</Button>
     </Grid>
 </Window>
