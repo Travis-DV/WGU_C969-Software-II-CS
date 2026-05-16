@@ -189,7 +189,7 @@ public partial class CityForm : INotifyPropertyChanged
         {
             return "";
         }
-        return this.CityName; //Add country code call when country added
+        return $"{this.CityName}, {this.Countries[SelectedCountryIndex].CountryName}"; //Add country code call when country added
     }
     
     public event PropertyChangedEventHandler? PropertyChanged;

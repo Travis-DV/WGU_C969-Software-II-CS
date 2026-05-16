@@ -94,6 +94,13 @@ public class PhoneClass : ValidationRule
 
     public override string ToString()
     {
+        if (this._countryCode == null || this._countryCode <= 0 ||
+            this._regionCode == null || this._regionCode <= 0 ||
+            this._prefix == null || this._prefix <= 0 ||
+            this._lineNumber == null || this._lineNumber <= 0)
+        {
+            return "";
+        }
         return $"+{this._countryCode} ({this._regionCode}) {this._prefix}-{this._lineNumber}";
     }
 }
