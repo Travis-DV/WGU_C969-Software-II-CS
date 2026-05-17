@@ -89,7 +89,7 @@
                          HorizontalAlignment="Left" VerticalAlignment="Center" 
                          Margin="12,0" Width="200"
                          Style="{StaticResource ControlInError}"
-                         SelectedIndex="{Binding SelectedCityId}">
+                         SelectedIndex="{Binding SelectedCityIndex}">
                 </ComboBox>
                 
                 <Button x:Name="CityAddButton"
@@ -118,7 +118,7 @@
             <TextBox.Text>
                 <Binding Path="PostalCode"
                          UpdateSourceTrigger="Explicit" ValidatesOnDataErrors="True" NotifyOnValidationError="True">
-                    <Binding.ValidationRules><local:BasicTextValidator></local:BasicTextValidator></Binding.ValidationRules>
+                    <Binding.ValidationRules><local:PostalValidator></local:PostalValidator></Binding.ValidationRules>
                 </Binding>
             </TextBox.Text>
         </TextBox>

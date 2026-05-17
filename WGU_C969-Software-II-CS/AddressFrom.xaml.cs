@@ -8,7 +8,7 @@ using System.Windows.Data;
 
 namespace WGU_C969_Software_II_CS;
 
-public partial class AddressFrom : INotifyPropertyChanged
+public partial class AddressFrom : INotifyPropertyChanged, IDatabaseInteraction
 {
     // ReSharper disable once InconsistentNaming
     public int ID { get; init; }
@@ -36,8 +36,9 @@ public partial class AddressFrom : INotifyPropertyChanged
         }
     }
     
-    private int _selectedCityId = -1;
-    public int SelectedCityId
+    // ReSharper disable once InconsistentNaming
+    private int SelectedCityId = -1;
+    public int SelectedCityIndex
     {
         get
         {
@@ -46,22 +47,18 @@ public partial class AddressFrom : INotifyPropertyChanged
             {
                 return -1;
             }
-            return this.Cities.FindIndex(c => c.ID == _selectedCityId);
+            return this.Cities.FindIndex(c => c.ID == SelectedCityId);
         }
         set
         {
+            int i = value;
             if (value > this.Cities.Count)
             {
-                int i = this.Cities.FindIndex(c => c.ID == value);
-                if (i >= 0)
-                {
-                    _selectedCityId = value;
-                    this.CitiesComboBox.SelectedIndex = i;
-                    return;
-                }
+                i = this.Cities.FindIndex(c => c.ID == value);
+                Console.WriteLine("Value greater than cities");
             }
-            _selectedCityId = this.Cities[value].ID;
-            OnPropertyChanged(nameof(SelectedCityId));
+            SelectedCityId = this.Cities[i].ID;
+            OnPropertyChanged(nameof(SelectedCityIndex));
         }
     }
     
@@ -79,15 +76,7 @@ public partial class AddressFrom : INotifyPropertyChanged
     private PhoneClass HomePhone { get; set; }  = new PhoneClass();
     public string PhoneNumberString
     {
-        get
-        {
-            string output = HomePhone?.ToString() ?? "";
-            if (output == "+0 (0) 0-0")
-            {
-                return "";
-            }
-            return output;
-        }
+        get => HomePhone?.ToString() ?? "";
         set
         {
             HomePhone.Validate(value.ToString(), CultureInfo.CurrentCulture);
@@ -120,7 +109,7 @@ public partial class AddressFrom : INotifyPropertyChanged
                         this.AddressOne = reader["address"].ToString() ?? "";
                         this.AddressTwo = reader["address2"].ToString() ?? "";
                         this.SelectedCityId = int.Parse(reader["cityId"].ToString() ?? "-1");
-                        //this.CitiesComboBox.SelectedIndex = this.SelectedCityId;
+                        OnPropertyChanged(nameof(SelectedCityIndex));
                         this.PostalCode = reader["postalCode"].ToString() ?? "";
                         this.HomePhone.Validate(reader["phone"].ToString() ?? "", CultureInfo.CurrentCulture);
                         OnPropertyChanged(nameof(PhoneNumberString));
@@ -170,6 +159,7 @@ public partial class AddressFrom : INotifyPropertyChanged
         };
         newCity.ShowDialog();
         this.ReadCities();
+        this.CitiesComboBox.SelectedIndex = this.Cities.FindIndex(c => c.ID == newCity.ID);
     }
 
     private void CityAddButtonClicked(object sender, RoutedEventArgs e)
@@ -188,6 +178,24 @@ public partial class AddressFrom : INotifyPropertyChanged
 
     private void CityModButtonClicked(object sender, RoutedEventArgs e)
     {
+        BindingExpression? citiesComboBinding = CitiesComboBox.GetBindingExpression(Selector.SelectedIndexProperty);
+        if (citiesComboBinding != null)
+        {
+            if (CitiesComboBox.SelectedIndex < 0)
+            {
+                Validation.MarkInvalid(citiesComboBinding,
+                    new ValidationError(new ExceptionValidationRule(), citiesComboBinding));
+                return;
+            }
+            else
+            {
+                Validation.ClearInvalid(citiesComboBinding);
+            }
+        }
+        else
+        {
+            throw new Exception("Failed to bind CitiesComboBox");
+        }
         CityPushButtonClicked(this.Cities[this.CitiesComboBox.SelectedIndex].ID);
     }
 
@@ -300,7 +308,7 @@ public partial class AddressFrom : INotifyPropertyChanged
         cmd.Parameters.AddWithValue("@addressId", this.ID);
         cmd.Parameters.AddWithValue("@address", this.AddressOne);
         cmd.Parameters.AddWithValue("@address2", this.AddressTwo);
-        cmd.Parameters.AddWithValue("@cityId", this._selectedCityId);
+        cmd.Parameters.AddWithValue("@cityId", this.SelectedCityId);
         cmd.Parameters.AddWithValue("@postalCode", this.PostalCode);
         cmd.Parameters.AddWithValue("@phone", this.HomePhone);
         cmd.Parameters.AddWithValue("@createDate", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
@@ -319,9 +327,9 @@ public partial class AddressFrom : INotifyPropertyChanged
             output += $", {AddressTwo}";
         }
         // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
-        if (this.Cities != null && this.Cities.Count > this.SelectedCityId && this.SelectedCityId > -1 && this.PostalCode != "")
+        if (this.Cities != null && this.Cities.Count > this.SelectedCityIndex && this.SelectedCityIndex > -1 && this.PostalCode != "")
         {
-            output += $", {this.Cities[this.SelectedCityId]} {this.PostalCode}";
+            output += $", {this.Cities[this.SelectedCityIndex]} {this.PostalCode}";
         }
         if (this.HomePhone.ToString() != "")
         {
@@ -344,12 +352,13 @@ public class PostalValidator : ValidationRule
 {
     public override ValidationResult Validate(object? value, CultureInfo cuture)
     {
-        if (!int.TryParse(value?.ToString(), out _))
+        int code = 0;
+        if (!int.TryParse(value?.ToString(), out code))
         {
             return new ValidationResult(false, "Must be a number");
         }
 
-        if (value.ToString() is { Length: < 5 })
+        if (code.ToString() is { Length: < 5 })
         {
             return new ValidationResult(false, "Must be a 5 digit postal code");
         }

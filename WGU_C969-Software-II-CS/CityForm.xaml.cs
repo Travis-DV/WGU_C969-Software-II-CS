@@ -8,7 +8,7 @@ using System.Windows.Data;
 
 namespace WGU_C969_Software_II_CS;
 
-public partial class CityForm : INotifyPropertyChanged
+public partial class CityForm : INotifyPropertyChanged, IDatabaseInteraction
 {
     // ReSharper disable once InconsistentNaming
     public int ID { get; init; }
@@ -42,17 +42,13 @@ public partial class CityForm : INotifyPropertyChanged
         }
         set
         {
+            int i = value;
             if (value > this.Countries.Count)
             {
-                int i = this.Countries.FindIndex(c => c.ID == value);
-                if (i >= 0)
-                {
-                    SelectedCountryId = value;
-                    this.CountriesComboBox.SelectedIndex = i;
-                    return;
-                }
+                i = this.Countries.FindIndex(c => c.ID == value);
+                Console.WriteLine("Value greater than countries");
             }
-            SelectedCountryId = this.Countries[value].ID;
+            SelectedCountryId = this.Countries[i].ID;
             OnPropertyChanged(nameof(SelectedCountryIndex));
         }
     }

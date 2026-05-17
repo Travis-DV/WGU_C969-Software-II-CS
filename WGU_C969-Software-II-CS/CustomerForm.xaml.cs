@@ -8,7 +8,7 @@ using System.Windows.Data;
 
 namespace WGU_C969_Software_II_CS;
 
-public partial class CustomerForm : INotifyPropertyChanged
+public partial class CustomerForm : INotifyPropertyChanged, IDatabaseInteraction
 {
     // ReSharper disable once InconsistentNaming
     private int ID { get; init; }
@@ -77,15 +77,7 @@ public partial class CustomerForm : INotifyPropertyChanged
     private PhoneClass PhoneNumber { get; set; } = new PhoneClass();
     public string PhoneNumberString
     {
-        get
-        {
-            string output = PhoneNumber?.ToString() ?? "";
-            if (output == "+0 (0) 0-0")
-            {
-                return "";
-            }
-            return output;
-        }
+        get => PhoneNumber?.ToString() ?? "";
         set
         {
             PhoneNumber.Validate(value.ToString(), CultureInfo.CurrentCulture);
@@ -245,22 +237,5 @@ public partial class CustomerForm : INotifyPropertyChanged
     protected void OnPropertyChanged(string name)
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-    }
-}
-
-public class BasicTextValidator : ValidationRule
-{
-    public override ValidationResult Validate(object? value, CultureInfo cuture)
-    {
-        if (value == null)
-        {
-            return new ValidationResult(false, "Value is null");
-        }
-        if (value.ToString() is { Length: 0 })
-        {
-            return new ValidationResult(false, "Required");
-        }
-
-        return ValidationResult.ValidResult;
     }
 }

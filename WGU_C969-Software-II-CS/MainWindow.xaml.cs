@@ -2,6 +2,7 @@
 using System.Globalization;
 using System.IO;
 using System.Windows;
+using System.Windows.Controls;
 
 namespace WGU_C969_Software_II_CS;
 
@@ -252,6 +253,23 @@ public partial class MainWindow
                 cmd.ExecuteNonQuery();
             }
         }
+    }
+}
+
+public class BasicTextValidator : ValidationRule
+{
+    public override ValidationResult Validate(object? value, CultureInfo cuture)
+    {
+        if (value == null)
+        {
+            return new ValidationResult(false, "Value is null");
+        }
+        if (value.ToString() is { Length: 0 })
+        {
+            return new ValidationResult(false, "Required");
+        }
+
+        return ValidationResult.ValidResult;
     }
 }
 
