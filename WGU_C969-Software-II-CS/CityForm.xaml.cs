@@ -1,5 +1,5 @@
-﻿using System.ComponentModel;
-using System.Data.SQLite;
+﻿using MySqlConnector;
+using System.ComponentModel;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
@@ -65,11 +65,11 @@ public partial class CityForm : INotifyPropertyChanged, IDatabaseInteraction
         this.Countries = new AdvancedList<CountryRecord>(this.RenderCountriesComboBox);
         this.ReadCountries();
 
-        using SQLiteConnection conn = new SQLiteConnection(MainWindow.ConnectionString);
-        conn.Open();
-        using SQLiteCommand cmd = new SQLiteCommand($"SELECT * FROM  city WHERE cityId = @id", conn);
-        cmd.Parameters.AddWithValue("@id", this.ID);
-        using (SQLiteDataReader reader = cmd.ExecuteReader())
+         using MySqlConnection connection = new MySqlConnection(MainWindow.ConnectionBuilder.ConnectionString);
+         connection.Open();
+        using MySqlCommand command = new MySqlCommand($"SELECT * FROM  city WHERE cityId = @id", connection);
+        command.Parameters.AddWithValue("@id", this.ID);
+        using (var reader = command.ExecuteReader())
         {
             if (reader.Read())
             {
@@ -88,10 +88,10 @@ public partial class CityForm : INotifyPropertyChanged, IDatabaseInteraction
     {
         this.Countries = new AdvancedList<CountryRecord>(this.RenderCountriesComboBox);
         
-        using SQLiteConnection conn = new SQLiteConnection(MainWindow.ConnectionString);
-        conn.Open();
-        using var cmd = new SQLiteCommand("SELECT * FROM country", conn);
-        using var reader = cmd.ExecuteReader();
+        using MySqlConnection connection = new MySqlConnection(MainWindow.ConnectionBuilder.ConnectionString);
+        connection.Open();
+        using MySqlCommand command = new MySqlCommand("SELECT * FROM country", connection);
+        using var reader = command.ExecuteReader();
         while (reader.Read())
         {
             this.Countries.Add(new CountryRecord(
@@ -147,30 +147,28 @@ public partial class CityForm : INotifyPropertyChanged, IDatabaseInteraction
     
     private void DataBaseUpdater()
     {
-        using SQLiteConnection conn = new SQLiteConnection(MainWindow.ConnectionString);
-        conn.Open();
+        using MySqlConnection connection = new MySqlConnection(MainWindow.ConnectionBuilder.ConnectionString);
+        connection.Open();
         // ReSharper disable once UseRawString
-        using SQLiteCommand cmd = new SQLiteCommand(@"
+        using MySqlCommand command = new MySqlCommand(@"
                     INSERT INTO city 
                         (cityId, city, countryId, createDate, createdBy, lastUpdate, lastUpdateBy)
                     VALUES 
-                        (@cityId, @city, @countryId, @createDate, @createdBy, @lastUpdate, @lastUpdateBy)
-                    ON CONFLICT(cityId) DO UPDATE SET
-                        city = excluded.city, 
-                        countryId = excluded.countryId, 
-                        createDate = createDate, 
-                        createdBy = createdBy, 
-                        lastUpdate = excluded.lastUpdate, 
-                        lastUpdateBy = excluded.lastUpdateBy", conn);
-        cmd.Parameters.AddWithValue("@cityId", this.ID);
-        cmd.Parameters.AddWithValue("@city", this.CityName);
-        cmd.Parameters.AddWithValue("@countryId", this.SelectedCountryId);
-        cmd.Parameters.AddWithValue("@createDate", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
-        cmd.Parameters.AddWithValue("@createdBy", this.CurrentUsername);
-        cmd.Parameters.AddWithValue("@lastUpdate", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
-        cmd.Parameters.AddWithValue("@lastUpdateBy", this.CurrentUsername);
+                        (@cityId, @city, @countryId, @createDate, @createdBy, @lastUpdate, @lastUpdateBy) AS new
+                    ON DUPLICATE KEY UPDATE
+                        city = new.city,
+                        countryId = new.countryId,
+                        lastUpdate = new.lastUpdate,
+                        lastUpdateBy = new.lastUpdateBy", connection);
+        command.Parameters.AddWithValue("@cityId", this.ID);
+        command.Parameters.AddWithValue("@city", this.CityName);
+        command.Parameters.AddWithValue("@countryId", this.SelectedCountryId);
+        command.Parameters.AddWithValue("@createDate", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+        command.Parameters.AddWithValue("@createdBy", this.CurrentUsername);
+        command.Parameters.AddWithValue("@lastUpdate", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+        command.Parameters.AddWithValue("@lastUpdateBy", this.CurrentUsername);
 
-        cmd.ExecuteNonQuery();
+        command.ExecuteNonQuery();
     }
     
     public static implicit operator string(CityForm city)

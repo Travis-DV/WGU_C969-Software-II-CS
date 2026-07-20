@@ -1,6 +1,6 @@
-﻿using System.ComponentModel;
+﻿using MySqlConnector;
+using System.ComponentModel;
 using System.Configuration;
-using System.Data.SQLite;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
@@ -74,17 +74,6 @@ public partial class CustomerForm : INotifyPropertyChanged, IDatabaseInteraction
         set => OnPropertyChanged(nameof(AddressString));
     }
 
-    private PhoneClass PhoneNumber { get; set; } = new PhoneClass();
-    public string PhoneNumberString
-    {
-        get => PhoneNumber?.ToString() ?? "";
-        set
-        {
-            PhoneNumber.Validate(value.ToString(), CultureInfo.CurrentCulture);
-            OnPropertyChanged(nameof(PhoneNumberString));
-        }
-    }
-
     public CustomerForm(int customerId, string currentUsername)
     {
         this.DataContext = this;
@@ -95,26 +84,22 @@ public partial class CustomerForm : INotifyPropertyChanged, IDatabaseInteraction
         this.AddressMod = false;
         this.Address = new AddressFrom(this.AddressId, this.CurrentUsername);
         
-        using (SQLiteConnection conn = new SQLiteConnection(MainWindow.ConnectionString))
+        using (MySqlConnection connection = new MySqlConnection(MainWindow.ConnectionBuilder.ConnectionString))
         {
-            conn.Open();
-            using (SQLiteCommand cmd =
-                   new SQLiteCommand($"SELECT * FROM  customer WHERE customerId == @id", conn))
+            connection.Open();
+            using (MySqlCommand command =
+                   new MySqlCommand($"SELECT * FROM  customer WHERE customerId = @id", connection))
             {
-                cmd.Parameters.AddWithValue("@id", this.ID);
-                using (SQLiteDataReader reader = cmd.ExecuteReader())
+                command.Parameters.AddWithValue("@id", this.ID);
+                using var reader = command.ExecuteReader();
+                if (reader.Read())
                 {
-                    if (reader.Read())
-                    {
-                        string[] customerName = (reader["customerName"].ToString() ?? "").Split(" ");
-                        this.FirstName = customerName[0];
-                        this.LastName = customerName[1];
-                        this.AddressId = int.Parse(reader["addressId"].ToString() ?? "");
-                        this.AddressMod = true;
-                        this.Address = new AddressFrom(this.AddressId, this.CurrentUsername);
-                        this.PhoneNumber.Validate(reader["phoneNumber"].ToString() ?? "", CultureInfo.CurrentCulture);
-                        OnPropertyChanged(nameof(PhoneNumberString));
-                    }
+                    string[] customerName = (reader["customerName"].ToString() ?? "").Split(" ");
+                    this.FirstName = customerName[0];
+                    this.LastName = customerName[1];
+                    this.AddressId = int.Parse(reader["addressId"].ToString() ?? "");
+                    this.AddressMod = true;
+                    this.Address = new AddressFrom(this.AddressId, this.CurrentUsername);
                 }
             }
         }
@@ -123,7 +108,6 @@ public partial class CustomerForm : INotifyPropertyChanged, IDatabaseInteraction
         this.LastNameLabel.Content = WGU_C969_Software_II_CS.Resources.CustomerFormLocal.LastNameLabel + ": ";
         this.AddressLabel.Content = WGU_C969_Software_II_CS.Resources.CustomerFormLocal.AddressLabel + ": ";
         this.AddressClearButton.Content = WGU_C969_Software_II_CS.Resources.CustomerFormLocal.AddressClearButton;
-        this.PhoneNumberLabel.Content = WGU_C969_Software_II_CS.Resources.CustomerFormLocal.PhoneNumberLabel + ": ";
         this.DoneButton.Content = WGU_C969_Software_II_CS.Resources.CustomerFormLocal.DoneButton;
     }
 
@@ -131,10 +115,10 @@ public partial class CustomerForm : INotifyPropertyChanged, IDatabaseInteraction
     {
         if (this.AddressId == -1)
         {
-            using SQLiteConnection conn = new SQLiteConnection(MainWindow.ConnectionString);
-            conn.Open();
-            using SQLiteCommand cmd = new SQLiteCommand("SELECT IFNULL(MAX(addressId), 0) + 1 FROM address;", conn);
-            this.AddressId = Convert.ToInt32(cmd.ExecuteScalar());
+            using MySqlConnection connection = new MySqlConnection(MainWindow.ConnectionBuilder.ConnectionString);
+            connection.Open();
+            using MySqlCommand command = new MySqlCommand("SELECT IFNULL(MAX(addressId), 0) + 1 FROM address;", connection);
+            this.AddressId = Convert.ToInt32(command.ExecuteScalar());
         }
         this.Address = new AddressFrom(this.AddressId, this.CurrentUsername)
         {
@@ -179,13 +163,9 @@ public partial class CustomerForm : INotifyPropertyChanged, IDatabaseInteraction
             }
         }
 
-        BindingExpression? phoneNumberBinding = PhoneNumberTextBox.GetBindingExpression(TextBox.TextProperty);
-        phoneNumberBinding?.UpdateSource();
-
         if (firstNameBinding is { HasError: true } || 
             lastNameBinding is { HasError: true } ||
-            addressBinding is { HasError: true } ||
-            phoneNumberBinding is { HasError: true })
+            addressBinding is { HasError: true })
         {
             return;
         }
@@ -193,8 +173,6 @@ public partial class CustomerForm : INotifyPropertyChanged, IDatabaseInteraction
         this.FirstName = this.FirstNameTextBox.Text;
         this.LastName = this.LastNameTextBox.Text;
         this.AddressId = this.Address.ID;
-        this.PhoneNumber.Validate(PhoneNumberTextBox.Text, CultureInfo.CurrentCulture);
-        this.PhoneNumberTextBox.Text = this.PhoneNumber.ToString();
         
         this.DataBaseUpdater();
         this.DialogResult = true;
@@ -203,33 +181,29 @@ public partial class CustomerForm : INotifyPropertyChanged, IDatabaseInteraction
 
     private void DataBaseUpdater()
     {
-        using SQLiteConnection conn = new SQLiteConnection(MainWindow.ConnectionString);
-        conn.Open();
-        using SQLiteCommand cmd = new SQLiteCommand(@"
+        using MySqlConnection connection = new MySqlConnection(MainWindow.ConnectionBuilder.ConnectionString);
+        connection.Open();
+        using MySqlCommand command = new MySqlCommand(@"
                     INSERT INTO customer 
-                        (customerId, customerName, addressId, phonenumber, active, createDate, createdBy, lastUpdate, lastUpdateBy)
+                        (customerId, customerName, addressId, active, createDate, createdBy, lastUpdate, lastUpdateBy)
                     VALUES 
-                        (@customerId, @customerName, @addressId, @phoneNumber, @active, @createDate, @createdBy, @lastUpdate, @lastUpdateBy)
-                    ON CONFLICT(customerId) DO UPDATE SET
-                        customerName = excluded.customerName, 
-                        addressId = excluded.addressId, 
-                        phoneNumber = excluded.phoneNumber,
-                        active = excluded.active, 
-                        createDate = createDate, 
-                        createdBy = createdBy, 
-                        lastUpdate = excluded.lastUpdate, 
-                        lastUpdateBy = excluded.lastUpdateBy", conn);
-        cmd.Parameters.AddWithValue("@customerId", this.ID);
-        cmd.Parameters.AddWithValue("@customerName", $"{this.FirstName} {this.LastName}");
-        cmd.Parameters.AddWithValue("@addressId", this.AddressId);
-        cmd.Parameters.AddWithValue("@phoneNumber", this.PhoneNumber);
-        cmd.Parameters.AddWithValue("@active", 1);
-        cmd.Parameters.AddWithValue("@createDate", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
-        cmd.Parameters.AddWithValue("@createdBy", this.CurrentUsername);
-        cmd.Parameters.AddWithValue("@lastUpdate", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
-        cmd.Parameters.AddWithValue("@lastUpdateBy", this.CurrentUsername);
+                        (@customerId, @customerName, @addressId, @active, @createDate, @createdBy, @lastUpdate, @lastUpdateBy) AS new
+                    ON DUPLICATE KEY UPDATE
+                        customerName = new.customerName,
+                        addressId = new.addressId,
+                        active = new.active,
+                        lastUpdate = new.lastUpdate,
+                        lastUpdateBy = new.lastUpdateBy", connection);
+        command.Parameters.AddWithValue("@customerId", this.ID);
+        command.Parameters.AddWithValue("@customerName", $"{this.FirstName} {this.LastName}");
+        command.Parameters.AddWithValue("@addressId", this.AddressId);
+        command.Parameters.AddWithValue("@active", 1);
+        command.Parameters.AddWithValue("@createDate", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+        command.Parameters.AddWithValue("@createdBy", this.CurrentUsername);
+        command.Parameters.AddWithValue("@lastUpdate", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+        command.Parameters.AddWithValue("@lastUpdateBy", this.CurrentUsername);
 
-        cmd.ExecuteNonQuery();
+        command.ExecuteNonQuery();
     }
     
     public event PropertyChangedEventHandler? PropertyChanged;

@@ -1,6 +1,7 @@
-﻿using System.Data.SQLite;
+﻿using MySqlConnector;
 using System.Globalization;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -33,10 +34,10 @@ public partial class MainWindow
 
     private void NewCustomerClicked(object sender, RoutedEventArgs e)
     {
-        using SQLiteConnection conn = new SQLiteConnection(MainWindow.ConnectionString);
-        conn.Open();
-        using SQLiteCommand cmd = new SQLiteCommand("SELECT IFNULL(MAX(customerId), 0) + 1 FROM customer;", conn);
-        int nextId = Convert.ToInt32(cmd.ExecuteScalar());
+        using MySqlConnection connection = new MySqlConnection(MainWindow.ConnectionBuilder.ConnectionString);
+        connection.Open();
+        using MySqlCommand command = new MySqlCommand("SELECT IFNULL(MAX(customerId), 0) + 1 FROM customer;", connection);
+        int nextId = Convert.ToInt32(command.ExecuteScalar());
         
         CustomerForm newCustomer = new CustomerForm(1, this.CurrentUsername)
         {
@@ -62,62 +63,151 @@ public partial class MainWindow
         Thread.CurrentThread.CurrentUICulture = culture;
         
     }
-    
-    private static readonly string DbPath = $"{Directory.GetCurrentDirectory()}\\SchedulingSoftwareDatabase.db";
-    public static readonly string ConnectionString = $"Data Source={DbPath};Version=3;";
 
-    private static void CheckCreation(string currentUsername)
+    public static readonly MySqlConnectionStringBuilder ConnectionBuilder = new MySqlConnectionStringBuilder
     {
-        
-        Console.WriteLine(Directory.GetCurrentDirectory());
-        
-        if (!File.Exists(DbPath))
+        Server = "localhost",
+        UserID = "sqlUser",
+        Password = "Passw0rd!",
+        Database = "client_schedule"
+    }; 
+
+    private static async void CheckCreation(string currentUsername)
+    {
+        await using (MySqlConnection testconn = new  MySqlConnection("Server=localhost;User ID=sqlUser;Password=Passw0rd!;"))
         {
-            SQLiteConnection.CreateFile(DbPath);
+            bool databaseExists = false;
+            
+            Console.WriteLine("Connecting to server...");
+            await testconn.OpenAsync();
+            Console.WriteLine("Connected");
 
-            using SQLiteConnection conn = new SQLiteConnection(MainWindow.ConnectionString);
-            conn.Open();
-                
-            using (SQLiteCommand cmd = new SQLiteCommand(@"
-                                        CREATE TABLE country 
-                                       (
-                                           countryId INTEGER PRIMARY KEY, 
-                                           country VARCHAR(50), 
-                                           createDate VARCHAR(20), 
-                                           createdBy VARCHAR(40),
-                                           lastUpdate VARCHAR(20), 
-                                           lastUpdateBy VARCHAR(40)
-                                       )", conn))
+            await using (MySqlCommand command = new MySqlCommand("SELECT VERSION();", testconn))
             {
-                cmd.ExecuteNonQuery();
+                await using var reader = await command.ExecuteReaderAsync();
+
+                while (await reader.ReadAsync())
+                {
+                    Console.WriteLine($"MySQL Server Version: {reader.GetString(0)}");
+                }
             }
-                
-                
-            using (SQLiteCommand cmd = new SQLiteCommand(@"
-                    INSERT INTO country 
-                        (country, createDate, createdBy, lastUpdate, lastUpdateBy)
-                    VALUES 
-                        (@country, @createDate, @createdBy, @lastUpdate, @lastUpdateBy)", conn))
+            
+            await using (MySqlCommand command = new MySqlCommand("Show DATABASES", testconn))
             {
-                cmd.Parameters.AddWithValue("@country", "USA");
-                cmd.Parameters.AddWithValue("@createDate", DateTime.Now);
-                cmd.Parameters.AddWithValue("@createdBy", currentUsername);
-                cmd.Parameters.AddWithValue("@lastUpdate", DateTime.Now);
-                cmd.Parameters.AddWithValue("@lastUpdateBy", currentUsername);
-
-                cmd.ExecuteNonQuery();
-                    
-                cmd.Parameters.AddWithValue("@country", "Spain");
-                cmd.Parameters.AddWithValue("@createDate", DateTime.Now);
-                cmd.Parameters.AddWithValue("@createdBy", currentUsername);
-                cmd.Parameters.AddWithValue("@lastUpdate", DateTime.Now);
-                cmd.Parameters.AddWithValue("@lastUpdateBy", currentUsername);
-
-                cmd.ExecuteNonQuery();
+                await using var reader = await command.ExecuteReaderAsync();
+            
+                string databaseListString = "";
+                while (reader.Read())
+                {
+                    Console.WriteLine($"Database Names: {reader.GetString(0)}");
+                    databaseListString += $"{reader.GetString(0)},";
+                }
+                string[] databaseList = databaseListString.Split(',');
+                if (databaseList.Contains("client_schedule"))
+                {
+                    Console.WriteLine("Database Exists");
+                    databaseExists = true;
+                }
             }
-            using (SQLiteCommand cmd = new SQLiteCommand("SELECT * FROM  country", conn))
-            using (SQLiteDataReader reader = cmd.ExecuteReader())
+
+            if (!databaseExists)
             {
+                Console.WriteLine("Creating database...");
+            
+                await using (MySqlCommand command = new MySqlCommand("CREATE DATABASE client_schedule;", testconn))
+                {
+                    command.ExecuteNonQuery();
+                }
+
+                await using (MySqlCommand command = new MySqlCommand("SHOW DATABASES", testconn))
+                {
+                    await using var reader = await command.ExecuteReaderAsync();
+
+                    while (reader.Read())
+                    {
+                        Console.WriteLine($"Database Names: {reader.GetString(0)}");
+                    }
+                }
+            }
+        }
+        
+        
+        await using MySqlConnection connection = new MySqlConnection(ConnectionBuilder.ConnectionString);
+        await connection.OpenAsync();
+        string[] databaseTables;
+        await using (MySqlCommand command = new MySqlCommand("SHOW TABLES", connection))
+        {
+            await using var reader = await command.ExecuteReaderAsync();
+            
+            string databaseTablesString = "";
+            while (reader.Read())
+            {
+                Console.WriteLine($"TABLE Names: {reader.GetString(0)}");
+                databaseTablesString += $"{reader.GetString(0)},";
+            }
+            databaseTables = databaseTablesString.Split(',');
+        }
+        
+        
+        if (!databaseTables.Contains("country"))
+        {
+            Console.WriteLine("Generating country Table");
+            await using (MySqlCommand command = new MySqlCommand(
+                             @"
+                        CREATE TABLE country 
+                       (
+                           countryId INTEGER PRIMARY KEY, 
+                           country VARCHAR(50), 
+                           createDate DATETIME, 
+                           createdBy VARCHAR(40),
+                           lastUpdate TIMESTAMP, 
+                           lastUpdateBy VARCHAR(40)
+                       )", 
+                             connection)
+                        )
+            {
+                command.ExecuteNonQuery();
+            }
+            
+            await using (MySqlCommand command = new MySqlCommand(
+                                     @"
+                                        INSERT INTO country 
+                                            (countryId, country, createDate, createdBy, lastUpdate, lastUpdateBy)
+                                        VALUES 
+                                            (@countryId, @country, @createDate, @createdBy, @lastUpdate, @lastUpdateBy)",
+                                     connection)
+                                 )
+            {
+                command.Parameters.AddWithValue("@countryId", "0");
+                command.Parameters.AddWithValue("@country", "USA");
+                command.Parameters.AddWithValue("@createDate", DateTime.Now);
+                command.Parameters.AddWithValue("@createdBy", currentUsername);
+                command.Parameters.AddWithValue("@lastUpdate", DateTime.Now);
+                command.Parameters.AddWithValue("@lastUpdateBy", currentUsername);
+    
+                command.ExecuteNonQuery();
+            }
+            await using (MySqlCommand command = new MySqlCommand(
+                             @"
+                                        INSERT INTO country 
+                                            (countryId, country, createDate, createdBy, lastUpdate, lastUpdateBy)
+                                        VALUES 
+                                            (@countryId, @country, @createDate, @createdBy, @lastUpdate, @lastUpdateBy)",
+                             connection)
+                        )
+            {
+                command.Parameters.AddWithValue("@countryId", "1");
+                command.Parameters.AddWithValue("@country", "Spain");
+                command.Parameters.AddWithValue("@createDate", DateTime.Now);
+                command.Parameters.AddWithValue("@createdBy", currentUsername);
+                command.Parameters.AddWithValue("@lastUpdate", DateTime.Now);
+                command.Parameters.AddWithValue("@lastUpdateBy", currentUsername);
+    
+                command.ExecuteNonQuery();
+            }
+            await using (MySqlCommand command = new MySqlCommand("SELECT * FROM  country", connection))
+            {
+                await using var reader = await command.ExecuteReaderAsync();
                 while (reader.Read())
                 {
                     Console.WriteLine(
@@ -130,125 +220,131 @@ public partial class MainWindow
                     );
                 }
             }
-                
-            using (SQLiteCommand cmd = new SQLiteCommand(@"
-                                    CREATE TABLE address 
-                                    (
-                                        addressId INTEGER PRIMARY KEY, 
-                                        address VARCHAR(50), 
-                                        address2 VARCHAR(50),
-                                        cityId INTEGER,
-                                        postalCode VARCHAR(10),
-                                        phone VARCHAR(20),
-                                        createDate VARCHAR(20), 
-                                        createdBy VARCHAR(40),
-                                        lastUpdate VARCHAR(20), 
-                                        lastUpdateBy VARCHAR(40),
-                                        FOREIGN KEY (cityId) REFERENCES city(cityId) 
-                                    )", conn))
+        }
+        
+        if (!databaseTables.Contains("city"))
+        {
+            Console.WriteLine("Generating city Table");
+            await using (MySqlCommand command = new MySqlCommand(
+                             @"
+                            CREATE TABLE city 
+                            (
+                                cityId INTEGER PRIMARY KEY, 
+                                city VARCHAR(50), 
+                                countryId INTEGER,
+                                createDate DATETIME, 
+                                createdBy VARCHAR(40),
+                                lastUpdate TIMESTAMP, 
+                                lastUpdateBy VARCHAR(40),
+                                FOREIGN KEY (countryId) REFERENCES country(countryId) 
+                            )", 
+                             connection)
+                        )
             {
-                cmd.ExecuteNonQuery();
+                command.ExecuteNonQuery();
             }
-                
-            using (SQLiteCommand cmd = new SQLiteCommand(@"
-                                    CREATE TABLE city 
-                                    (
-                                        cityId INTEGER PRIMARY KEY, 
-                                        city VARCHAR(50), 
-                                        countryId INTEGER,
-                                        createDate VARCHAR(20), 
-                                        createdBy VARCHAR(40),
-                                        lastUpdate VARCHAR(20), 
-                                        lastUpdateBy VARCHAR(40),
-                                        FOREIGN KEY (countryId) REFERENCES country(countryId) 
-                                    )", conn))
+        }    
+        
+        if (!databaseTables.Contains("address"))
+        {
+            Console.WriteLine("Generating address Table");
+            await using (MySqlCommand command = new MySqlCommand(
+                             @"
+                            CREATE TABLE address 
+                            (
+                                addressId INTEGER PRIMARY KEY, 
+                                address VARCHAR(50), 
+                                address2 VARCHAR(50),
+                                cityId INTEGER,
+                                postalCode VARCHAR(10),
+                                phone VARCHAR(20),
+                                createDate DATETIME, 
+                                createdBy VARCHAR(40),
+                                lastUpdate TIMESTAMP, 
+                                lastUpdateBy VARCHAR(40),
+                                FOREIGN KEY (cityId) REFERENCES city(cityId) 
+                            )", 
+                             connection)
+                        )
             {
-                cmd.ExecuteNonQuery();
-            }
-                
-            using (SQLiteCommand cmd = new SQLiteCommand(@"
-                                    CREATE TABLE customer 
-                                    (
-                                        customerId INTEGER PRIMARY KEY, 
-                                        customerName VARCHAR(50), 
-                                        addressId INTEGER,
-                                        phoneNumber VARCHAR(20),
-                                        active SMALLINT(1), 
-                                        createDate VARCHAR(20), 
-                                        createdBy VARCHAR(40),
-                                        lastUpdate VARCHAR(20), 
-                                        lastUpdateBy VARCHAR(40),
-                                        FOREIGN KEY (addressId) REFERENCES address(addressId) 
-                                    )", conn))
-            {
-                cmd.ExecuteNonQuery();
-            }
-                
-            using (SQLiteCommand cmd = new SQLiteCommand(@"
-                                    CREATE TABLE user 
-                                    (
-                                        userId INTEGER PRIMARY KEY, 
-                                        userName VARCHAR(50), 
-                                        password VARCHAR(50),
-                                        active SMALLINT(1), 
-                                        createDate VARCHAR(20), 
-                                        createdBy VARCHAR(40),
-                                        lastUpdate VARCHAR(20), 
-                                        lastUpdateBy VARCHAR(40)
-                                    )", conn))
-            {
-                cmd.ExecuteNonQuery();
-            }
-                
-            using (SQLiteCommand cmd = new SQLiteCommand(@"
-                                    CREATE TABLE appointment 
-                                    (
-                                        appointmentId INTEGER PRIMARY KEY, 
-                                        customerId INTEGER,
-                                        userId INTEGER,
-                                        title VARCHAR(50), 
-                                        description TEXT,
-                                        location TEXT,
-                                        contact TEXT,
-                                        type TEXT,
-                                        url VARCHAR(255),
-                                        start DATE,
-                                        end DATE,
-                                        createDate VARCHAR(20), 
-                                        createdBy VARCHAR(40),
-                                        lastUpdate VARCHAR(20), 
-                                        lastUpdateBy VARCHAR(40),
-                                        FOREIGN KEY (customerId) REFERENCES customer(customerId),
-                                        FOREIGN KEY (userId) REFERENCES user(userId) 
-                                    )", conn))
-            {
-                cmd.ExecuteNonQuery();
+                command.ExecuteNonQuery();
             }
         }
-        else
-        {
-            // ReSharper disable once LocalizableElement
-            Console.WriteLine("Exists");
-        }
-
-        using (SQLiteConnection conn = new SQLiteConnection(MainWindow.ConnectionString))
-        {
-            conn.Open();
-            // ReSharper disable once LocalizableElement
-            Console.WriteLine("Connected");
             
-            string query = "SELECT name FROM sqlite_master WHERE type='table'";
-
-            using (var cmd = new SQLiteCommand(query, conn))
-            using (var reader = cmd.ExecuteReader())
+        if (!databaseTables.Contains("customer"))
+        {
+            Console.WriteLine("Generating customer Table");
+            await using (MySqlCommand command = new MySqlCommand(
+                             @"
+                            CREATE TABLE customer 
+                            (
+                                customerId INTEGER PRIMARY KEY, 
+                                customerName VARCHAR(45), 
+                                addressId INTEGER,
+                                active TINYINT(1), 
+                                createDate DATETIME, 
+                                createdBy VARCHAR(40),
+                                lastUpdate TIMESTAMP, 
+                                lastUpdateBy VARCHAR(40),
+                                FOREIGN KEY (addressId) REFERENCES address(addressId) 
+                            )", 
+                             connection)
+                        )
             {
-                while (reader.Read())
-                {
-                    // ReSharper disable once LocalizableElement
-                    Console.WriteLine("Table: " + reader["name"]);
-                }
+                command.ExecuteNonQuery();
             }
-            using (var cmd = new SQLiteCommand("PRAGMA foreign_keys = ON;", conn))
+        }
+            
+        if (!databaseTables.Contains("user"))
+        {
+            Console.WriteLine("Generating user Table");
+            await using (MySqlCommand command = new MySqlCommand(
+                             @"
+                            CREATE TABLE user 
+                            (
+                                userId INTEGER PRIMARY KEY, 
+                                userName VARCHAR(50), 
+                                password VARCHAR(50),
+                                active TINYINT(1), 
+                                createDate DATETIME, 
+                                createdBy VARCHAR(40),
+                                lastUpdate TIMESTAMP, 
+                                lastUpdateBy VARCHAR(40)
+                            )", 
+                             connection)
+                        )
+            {
+                command.ExecuteNonQuery();
+            }
+        }
+            
+        if (!databaseTables.Contains("appointment"))
+        {
+            Console.WriteLine("Generating appointment Table");
+            await using (MySqlCommand cmd = new MySqlCommand(
+                             @"
+                            CREATE TABLE appointment 
+                            (
+                                appointmentId INTEGER PRIMARY KEY, 
+                                customerId INTEGER,
+                                userId INTEGER,
+                                title VARCHAR(255), 
+                                description TEXT,
+                                location TEXT,
+                                contact TEXT,
+                                type TEXT,
+                                url VARCHAR(255),
+                                start DATETIME,
+                                end DATETIME,
+                                createDate DATETIME, 
+                                createdBy VARCHAR(40),
+                                lastUpdate TIMESTAMP, 
+                                lastUpdateBy VARCHAR(40),
+                                FOREIGN KEY (customerId) REFERENCES customer(customerId),
+                                FOREIGN KEY (userId) REFERENCES user(userId) 
+                            )", 
+                             connection)
+                        )
             {
                 cmd.ExecuteNonQuery();
             }

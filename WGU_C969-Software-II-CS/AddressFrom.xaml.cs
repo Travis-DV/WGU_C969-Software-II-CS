@@ -1,5 +1,5 @@
-﻿using System.ComponentModel;
-using System.Data.SQLite;
+﻿using MySqlConnector;
+using System.ComponentModel;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
@@ -96,13 +96,13 @@ public partial class AddressFrom : INotifyPropertyChanged, IDatabaseInteraction
         this.Cities = new AdvancedList<CityForm>(this.RenderCitiesComboBox);
         this.ReadCities();
 
-        using (SQLiteConnection conn = new SQLiteConnection(MainWindow.ConnectionString))
+        using (MySqlConnection connection = new MySqlConnection(MainWindow.ConnectionBuilder.ConnectionString))
         {
-            conn.Open();
-            using (SQLiteCommand cmd = new SQLiteCommand($"SELECT * FROM  address WHERE addressId = @id", conn))
+            connection.Open();
+            using (MySqlCommand command = new MySqlCommand($"SELECT * FROM  address WHERE addressId = @id", connection))
             {
-                cmd.Parameters.AddWithValue("@id", this.ID);
-                using (SQLiteDataReader reader = cmd.ExecuteReader())
+                command.Parameters.AddWithValue("@id", this.ID);
+                using (var reader = command.ExecuteReader())
                 {
                     if (reader.Read())
                     {
@@ -134,10 +134,10 @@ public partial class AddressFrom : INotifyPropertyChanged, IDatabaseInteraction
     {
         this.Cities = new AdvancedList<CityForm>(this.RenderCitiesComboBox);
         
-        using SQLiteConnection conn = new SQLiteConnection(MainWindow.ConnectionString);
-        conn.Open();
-        using var cmd = new SQLiteCommand("SELECT * FROM city", conn);
-        using var reader = cmd.ExecuteReader();
+        using MySqlConnection connection = new MySqlConnection(MainWindow.ConnectionBuilder.ConnectionString);
+        connection.Open();
+        using var command = new MySqlCommand("SELECT * FROM city", connection);
+        using var reader = command.ExecuteReader();
         while (reader.Read())
         {
             this.Cities.Add(new CityForm(int.Parse(reader["cityId"].ToString() ?? ""), this.CurrentUsername));
@@ -165,12 +165,12 @@ public partial class AddressFrom : INotifyPropertyChanged, IDatabaseInteraction
     private void CityAddButtonClicked(object sender, RoutedEventArgs e)
     {
         int cityId;
-        using (SQLiteConnection conn = new SQLiteConnection(MainWindow.ConnectionString))
+        using (MySqlConnection connection = new MySqlConnection(MainWindow.ConnectionBuilder.ConnectionString))
         {
-            conn.Open();
-            using (SQLiteCommand cmd = new SQLiteCommand("SELECT IFNULL(MAX(cityId), 0) + 1 FROM city;", conn))
+            connection.Open();
+            using (MySqlCommand command = new MySqlCommand("SELECT IFNULL(MAX(cityId), 0) + 1 FROM city;", connection))
             {
-                cityId = Convert.ToInt32(cmd.ExecuteScalar());
+                cityId = Convert.ToInt32(command.ExecuteScalar());
             }
         }
         this.CityPushButtonClicked(cityId);
@@ -211,15 +211,15 @@ public partial class AddressFrom : INotifyPropertyChanged, IDatabaseInteraction
             "Confirm Deletion", MessageBoxButton.YesNo);
         if (result == MessageBoxResult.Yes)
         {
-            using (SQLiteConnection conn = new SQLiteConnection(MainWindow.ConnectionString))
+            using (MySqlConnection connection = new MySqlConnection(MainWindow.ConnectionBuilder.ConnectionString))
             {
-                conn.Open();
-                using (SQLiteCommand cmd = new SQLiteCommand(
-                           $"DELETE FROM city WHERE cityId = @id;",
-                           conn))
+                connection.Open();
+                using (MySqlCommand command = new MySqlCommand(
+                           "DELETE FROM city WHERE cityId = @id;",
+                           connection))
                 {
-                    cmd.Parameters.AddWithValue("@id", this.Cities[this.CitiesComboBox.SelectedIndex].ID);
-                    cmd.ExecuteNonQuery();
+                    command.Parameters.AddWithValue("@id", this.Cities[this.CitiesComboBox.SelectedIndex].ID);
+                    command.ExecuteNonQuery();
                 }
             }
             this.ReadCities();
@@ -287,36 +287,34 @@ public partial class AddressFrom : INotifyPropertyChanged, IDatabaseInteraction
     
     private void DataBaseUpdater()
     {
-        using SQLiteConnection conn = new SQLiteConnection(MainWindow.ConnectionString);
-        conn.Open();
+        using MySqlConnection connection = new MySqlConnection(MainWindow.ConnectionBuilder.ConnectionString);
+        connection.Open();
         // ReSharper disable once UseRawString
-        using SQLiteCommand cmd = new SQLiteCommand(@"
+        using MySqlCommand command = new MySqlCommand(@"
                     INSERT INTO address 
                         (addressId, address, address2, cityId, postalCode, phone, createDate, createdBy, lastUpdate, lastUpdateBy)
                     VALUES 
-                        (@addressId, @address, @address2, @cityId, @postalCode, @phone, @createDate, @createdBy, @lastUpdate, @lastUpdateBy)
-                    ON CONFLICT(addressId) DO UPDATE SET
-                        address = excluded.address, 
-                        address2 = excluded.address2, 
-                        cityId = excluded.cityId, 
-                        postalCode = excluded.postalCode, 
-                        phone = excluded.phone, 
-                        createDate = createDate, 
-                        createdBy = createdBy, 
-                        lastUpdate = excluded.lastUpdate, 
-                        lastUpdateBy = excluded.lastUpdateBy", conn);
-        cmd.Parameters.AddWithValue("@addressId", this.ID);
-        cmd.Parameters.AddWithValue("@address", this.AddressOne);
-        cmd.Parameters.AddWithValue("@address2", this.AddressTwo);
-        cmd.Parameters.AddWithValue("@cityId", this.SelectedCityId);
-        cmd.Parameters.AddWithValue("@postalCode", this.PostalCode);
-        cmd.Parameters.AddWithValue("@phone", this.HomePhone);
-        cmd.Parameters.AddWithValue("@createDate", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
-        cmd.Parameters.AddWithValue("@createdBy", this.CurrentUsername);
-        cmd.Parameters.AddWithValue("@lastUpdate", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
-        cmd.Parameters.AddWithValue("@lastUpdateBy", this.CurrentUsername);
+                        (@addressId, @address, @address2, @cityId, @postalCode, @phone, @createDate, @createdBy, @lastUpdate, @lastUpdateBy) AS new
+                    ON DUPLICATE KEY UPDATE
+                        address = new.address,
+                        address2 = new.address2,
+                        cityId = new.cityId,
+                        postalCode = new.postalCode,
+                        phone = new.phone,
+                        lastUpdate = new.lastUpdate,
+                        lastUpdateBy = new.lastUpdateBy", connection);
+        command.Parameters.AddWithValue("@addressId", this.ID);
+        command.Parameters.AddWithValue("@address", this.AddressOne);
+        command.Parameters.AddWithValue("@address2", this.AddressTwo);
+        command.Parameters.AddWithValue("@cityId", this.SelectedCityId);
+        command.Parameters.AddWithValue("@postalCode", this.PostalCode);
+        command.Parameters.AddWithValue("@phone", (string)this.HomePhone);
+        command.Parameters.AddWithValue("@createDate", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+        command.Parameters.AddWithValue("@createdBy", this.CurrentUsername);
+        command.Parameters.AddWithValue("@lastUpdate", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+        command.Parameters.AddWithValue("@lastUpdateBy", this.CurrentUsername);
 
-        cmd.ExecuteNonQuery();
+        command.ExecuteNonQuery();
     }
     
     public override string ToString()
