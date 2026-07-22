@@ -9,6 +9,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="*" />
             <RowDefinition Height="2*" />
+            <RowDefinition Height="2*" />
         </Grid.RowDefinitions>
         
         <ComboBox x:Name="LanguagesComboBox" Grid.Row="0" SelectionChanged="LanguageSelectedChanged" VerticalAlignment="Top">
@@ -17,6 +18,7 @@
         </ComboBox>
         
         <Button Content="Open Customer" Click="NewCustomerClicked" Grid.Row="1"/>
+        <Button Content="Open Appointment" Click="NewAppointmentClicked" Grid.Row="2"/>
         
     </Grid>
 </Window>

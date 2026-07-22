@@ -28,6 +28,10 @@
         <Generator>ResXFileCodeGenerator</Generator>
         <LastGenOutput>CityFormLocal.Designer.cs</LastGenOutput>
       </EmbeddedResource>
+      <EmbeddedResource Update="Resources\AppointmentForm.resx">
+        <Generator>ResXFileCodeGenerator</Generator>
+        <LastGenOutput>AppointmentForm.Designer.cs</LastGenOutput>
+      </EmbeddedResource>
     </ItemGroup>
 
     <ItemGroup>
@@ -45,6 +49,11 @@
         <DesignTime>True</DesignTime>
         <AutoGen>True</AutoGen>
         <DependentUpon>CityFormLocal.resx</DependentUpon>
+      </Compile>
+      <Compile Update="Resources\AppointmentForm.Designer.cs">
+        <DesignTime>True</DesignTime>
+        <AutoGen>True</AutoGen>
+        <DependentUpon>AppointmentForm.resx</DependentUpon>
       </Compile>
     </ItemGroup>
 

@@ -45,6 +45,20 @@ public partial class MainWindow
         };
         newCustomer.ShowDialog();
     }
+    private void NewAppointmentClicked(object sender, RoutedEventArgs e)
+    {
+        using MySqlConnection connection = new MySqlConnection(MainWindow.ConnectionBuilder.ConnectionString);
+        connection.Open();
+        using MySqlCommand command = new MySqlCommand("SELECT IFNULL(MAX(customerId), 0) + 1 FROM appointment;", connection);
+        int nextId = Convert.ToInt32(command.ExecuteScalar());
+        
+        AppointmentForm newAppointment = new AppointmentForm(1, this.CurrentUsername)
+        {
+            Owner = this
+        };
+        newAppointment.ShowDialog();
+    }
+    
     
     private void LanguageSelectedChanged(object sender, RoutedEventArgs e)
     {
