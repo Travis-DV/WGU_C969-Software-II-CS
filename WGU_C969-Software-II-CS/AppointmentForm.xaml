@@ -7,7 +7,7 @@
         mc:Ignorable="d"
         Title="AppointmentForm" Height="600" Width="800">
     <Window.Resources>
-        <Style x:Key="TextBoxInError" TargetType="{x:Type TextBox}">
+        <Style x:Key="ControlInError" TargetType="{x:Type Control}">
             <Style.Triggers>
                 <Trigger Property="Validation.HasError" Value="true">
                     <Setter Property="ToolTip"
@@ -24,14 +24,11 @@
             <RowDefinition Height="*"></RowDefinition>
             <RowDefinition Height="*"></RowDefinition>
             <RowDefinition Height="2*"></RowDefinition>
-            <RowDefinition Height="2*"></RowDefinition>
+            <RowDefinition Height="3*"></RowDefinition>
             <RowDefinition Height="*"></RowDefinition>
         </Grid.RowDefinitions>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"></ColumnDefinition>
-            <ColumnDefinition Width="*"></ColumnDefinition>
-        </Grid.ColumnDefinitions>
-        <GroupBox Grid.Column="0" Grid.Row="0" Grid.ColumnSpan="2" Margin="12,0" BorderThickness="0">
+        <!-- URL GROUPBOX -->
+        <GroupBox Grid.Column="0" Grid.Row="0" Margin="12,0" BorderThickness="0">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*"/>
@@ -48,9 +45,9 @@
                          Grid.Row="1"
                          Margin="0, 2.5, 0, 5"
                          HorizontalAlignment="Stretch" VerticalAlignment="Center" 
-                         Style="{StaticResource TextBoxInError}">
+                         Style="{StaticResource ControlInError}">
                     <TextBox.Text>
-                        <Binding Path="URL"
+                        <Binding Path="url"
                                  UpdateSourceTrigger="Explicit" ValidatesOnDataErrors="True" NotifyOnValidationError="True">
                             <Binding.ValidationRules><local:BasicTextValidator></local:BasicTextValidator></Binding.ValidationRules>
                         </Binding>
@@ -58,26 +55,27 @@
                 </TextBox>
             </Grid>
         </GroupBox>
-        <GroupBox Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="2" Margin="12,0" BorderThickness="0">
+        <!-- AppointmentTitle GROUPBOX -->
+        <GroupBox Grid.Column="0" Grid.Row="1" Margin="12,0" BorderThickness="0">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
-                <Label x:Name="TitleLabel"
+                <Label x:Name="AppointmentTitleLabel"
                        Grid.Row="0"
                        Margin="0, 5, 0, 2.5"
                        HorizontalAlignment="Stretch" VerticalAlignment="Center" 
                        HorizontalContentAlignment="Center">
-                    TitleLabel
+                    AppointmentTitleLabel
                 </Label>
-                <TextBox x:Name="TitleTextbox"
+                <TextBox x:Name="AppointmentTitleTextbox"
                          Grid.Row="1"
                          Margin="0, 2.5, 0, 5"
                          HorizontalAlignment="Stretch" VerticalAlignment="Center" 
-                         Style="{StaticResource TextBoxInError}">
+                         Style="{StaticResource ControlInError}">
                     <TextBox.Text>
-                        <Binding Path="Title"
+                        <Binding Path="AppointmentTitle"
                                  UpdateSourceTrigger="Explicit" ValidatesOnDataErrors="True" NotifyOnValidationError="True">
                             <Binding.ValidationRules><local:BasicTextValidator></local:BasicTextValidator></Binding.ValidationRules>
                         </Binding>
@@ -85,12 +83,14 @@
                 </TextBox>
             </Grid>
         </GroupBox>
-        <GroupBox Grid.Column="0" Grid.Row="2" Grid.ColumnSpan="2" Margin="12,0" BorderThickness="0">
+        <!-- DETAILS GROUPBOX -->
+        <GroupBox Grid.Column="0" Grid.Row="2" Margin="12,0" BorderThickness="0">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
+                <!-- LOCATION CONTACT TYPE GROUPBOX -->
                 <GroupBox Grid.Column="0" Grid.Row="0" Margin="6,0" BorderThickness="0">
                     <Grid>
                         <Grid.RowDefinitions>
@@ -117,7 +117,7 @@
                                   Margin="2.5, 0, 5, 0" 
                                   Padding="0, 5, 0, 2.5" 
                                   Style="{StaticResource ControlInError}"
-                                  SelectedIndex="{Binding SelectedLocationIndex}">
+                                  SelectedItem="{Binding SelectedLocation}">
                         </ComboBox>
                         <Label x:Name="ContactLabel"
                                Grid.Row="1" Grid.Column="0"
@@ -130,7 +130,7 @@
                                  Margin="2.5, 0, 5, 0"
                                  Padding="0, 2.5, 0, 2.5"
                                  HorizontalAlignment="Stretch" VerticalAlignment="Center" 
-                                 Style="{StaticResource TextBoxInError}">
+                                 Style="{StaticResource ControlInError}">
                             <TextBox.Text>
                                 <Binding Path="Contact"
                                          UpdateSourceTrigger="Explicit" ValidatesOnDataErrors="True" NotifyOnValidationError="True">
@@ -153,9 +153,9 @@
                                   Style="{StaticResource ControlInError}"
                                   SelectedIndex="{Binding SelectedTypeIndex}">
                         </ComboBox>
-                        
                     </Grid>
                 </GroupBox>
+                <!-- DESCRIPTION GROUPBOX -->
                 <GroupBox Grid.Column="1" Grid.Row="0" Margin="6,0" BorderThickness="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                     <Grid>
                         <Grid.RowDefinitions>
@@ -173,7 +173,7 @@
                                  Grid.Row="1"
                                  Margin="0, 2.5"
                                  HorizontalAlignment="Stretch" VerticalAlignment="Stretch" 
-                                 Style="{StaticResource TextBoxInError}">
+                                 Style="{StaticResource ControlInError}">
                             <TextBox.Text>
                                 <Binding Path="Description"
                                          UpdateSourceTrigger="Explicit" ValidatesOnDataErrors="True" NotifyOnValidationError="True">
@@ -185,58 +185,29 @@
                 </GroupBox>
             </Grid>
         </GroupBox>
-        
-        <GroupBox Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Margin="12, 0" BorderThickness="0">
+        <!-- TIME GROUPBOX -->
+        <GroupBox Grid.Row="3" Grid.Column="0" Margin="12, 5" BorderThickness="0">
             <Grid Margin="0">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="2*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="3*"/>
                 </Grid.ColumnDefinitions>
-                <Calendar Grid.Column="0"></Calendar>
-                <GroupBox Grid.Column="1" Padding="0" Margin="0" BorderThickness="0">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="*"/>
-                            <RowDefinition Height="*"/>
-                        </Grid.RowDefinitions>
-                        <GroupBox Grid.Row="0" Padding="0" Margin="0" BorderThickness="0">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="2*"/>
-                                    <ColumnDefinition Width="3*"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <Label x:Name="StartTimeLabel" 
-                                       Grid.Column="0" Grid.Row="0"
-                                       HorizontalAlignment="Right" VerticalAlignment="Center" 
-                                       Margin="12,0">
-                                    StartTimeLabel
-                                </Label>
-                                <TextBox x:Name="StartTimeTextBox" 
-                                         Grid.Column="1" Grid.Row="0"
-                                         HorizontalAlignment="Left" VerticalAlignment="Center" 
-                                         Margin="12,0" Width="200" 
-                                         Style="{StaticResource TextBoxInError}"
-                                         IsReadOnly="True"
-                                         TextWrapping="NoWrap"
-                                         HorizontalScrollBarVisibility="Auto">
-                                    <TextBox.Text>
-                                        <Binding Path="StartTime"
-                                                 UpdateSourceTrigger="Explicit" ValidatesOnDataErrors="True" NotifyOnValidationError="True">
-                                        </Binding>
-                                    </TextBox.Text>
-                                </TextBox>
-                                <ComboBox x:Name="StartComboBox"
-                                          Grid.Column="2" Grid.Row="0"
-                                          HorizontalAlignment="Stretch" VerticalAlignment="Center" 
-                                          Style="{StaticResource ControlInError}"
-                                          SelectedIndex="{Binding StartTimeIndex}">
-                                </ComboBox>
-                            </Grid>
-                        </GroupBox>
-                    </Grid>
-                </GroupBox>
+                <Calendar Grid.Column="0" Padding="0 5"></Calendar>
+                <Label x:Name="SelectTimeLabel" 
+                       Grid.Column="1" Grid.Row="0"
+                       HorizontalAlignment="Right" VerticalAlignment="Center" 
+                       Margin="12,0">
+                    SelectTimeLabel
+                </Label>
+                <ComboBox x:Name="SelectTimeComboBox"
+                          Grid.Column="2" Grid.Row="0"
+                          HorizontalAlignment="Stretch" VerticalAlignment="Center" 
+                          Style="{StaticResource ControlInError}"
+                          SelectedItem="{Binding SelectedTime}">
+                </ComboBox>
             </Grid>
         </GroupBox>
+        <Button x:Name="DoneButton" Grid.Column="0" Grid.Row="4" HorizontalAlignment="Right" SizeChanged="MyTextBox_SizeChanged" Margin="10">Done</Button>
     </Grid>
 </Window>

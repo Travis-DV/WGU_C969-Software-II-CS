@@ -60,6 +60,15 @@ namespace WGU_C969_Software_II_CS.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Title.
+        /// </summary>
+        internal static string AppointmentTitle {
+            get {
+                return ResourceManager.GetString("AppointmentTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Contact.
         /// </summary>
         internal static string Contact {
@@ -87,15 +96,6 @@ namespace WGU_C969_Software_II_CS.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to End.
-        /// </summary>
-        internal static string End {
-            get {
-                return ResourceManager.GetString("End", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Location.
         /// </summary>
         internal static string Location {
@@ -105,20 +105,11 @@ namespace WGU_C969_Software_II_CS.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Start.
+        ///   Looks up a localized string similar to Select Time.
         /// </summary>
-        internal static string Start {
+        internal static string SelectTime {
             get {
-                return ResourceManager.GetString("Start", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Title.
-        /// </summary>
-        internal static string Title {
-            get {
-                return ResourceManager.GetString("Title", resourceCulture);
+                return ResourceManager.GetString("SelectTime", resourceCulture);
             }
         }
         

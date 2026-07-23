@@ -21,7 +21,7 @@
     <data name="URL" xml:space="preserve">
         <value>URL</value>
     </data>
-    <data name="Title" xml:space="preserve">
+    <data name="AppointmentTitle" xml:space="preserve">
         <value>Title</value>
     </data>
     <data name="Location" xml:space="preserve">
@@ -39,10 +39,7 @@
     <data name="Date" xml:space="preserve">
         <value>Date</value>
     </data>
-    <data name="Start" xml:space="preserve">
-        <value>Start</value>
-    </data>
-    <data name="End" xml:space="preserve">
-        <value>End</value>
+    <data name="SelectTime" xml:space="preserve">
+        <value>Select Time</value>
     </data>
 </root>

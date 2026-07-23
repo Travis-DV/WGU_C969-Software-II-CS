@@ -32,6 +32,9 @@
         <Generator>ResXFileCodeGenerator</Generator>
         <LastGenOutput>AppointmentForm.Designer.cs</LastGenOutput>
       </EmbeddedResource>
+      <EmbeddedResource Update="Resources\AppointmentForm.es-es.resx">
+        <DependentUpon>AppointmentForm.resx</DependentUpon>
+      </EmbeddedResource>
     </ItemGroup>
 
     <ItemGroup>
