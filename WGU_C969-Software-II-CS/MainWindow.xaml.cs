@@ -52,7 +52,7 @@ public partial class MainWindow
         using MySqlCommand command = new MySqlCommand("SELECT IFNULL(MAX(customerId), 0) + 1 FROM appointment;", connection);
         int nextId = Convert.ToInt32(command.ExecuteScalar());
         
-        AppointmentForm newAppointment = new AppointmentForm(1, this.CurrentUsername)
+        AppointmentForm newAppointment = new AppointmentForm(1, this.CurrentUsername, 1)
         {
             Owner = this
         };

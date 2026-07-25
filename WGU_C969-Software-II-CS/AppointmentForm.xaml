@@ -151,7 +151,7 @@
                                   Margin="2.5, 0, 5, 0" 
                                   Padding="0, 2.5, 0, 5" 
                                   Style="{StaticResource ControlInError}"
-                                  SelectedIndex="{Binding SelectedTypeIndex}">
+                                  SelectedItem="{Binding SelectedType}">
                         </ComboBox>
                     </Grid>
                 </GroupBox>
@@ -208,6 +208,6 @@
                 </ComboBox>
             </Grid>
         </GroupBox>
-        <Button x:Name="DoneButton" Grid.Column="0" Grid.Row="4" HorizontalAlignment="Right" SizeChanged="MyTextBox_SizeChanged" Margin="10">Done</Button>
+        <Button x:Name="DoneButton" Grid.Column="0" Grid.Row="4" HorizontalAlignment="Right" SizeChanged="MyTextBox_SizeChanged" Margin="10" Click="DoneButtonClicked">Done</Button>
     </Grid>
 </Window>
