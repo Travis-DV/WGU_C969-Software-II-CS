@@ -105,11 +105,20 @@ namespace WGU_C969_Software_II_CS.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Select Time.
+        ///   Looks up a localized string similar to Select End Time.
         /// </summary>
-        internal static string SelectTime {
+        internal static string SelectEndTime {
             get {
-                return ResourceManager.GetString("SelectTime", resourceCulture);
+                return ResourceManager.GetString("SelectEndTime", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select Start Time.
+        /// </summary>
+        internal static string SelectStartTime {
+            get {
+                return ResourceManager.GetString("SelectStartTime", resourceCulture);
             }
         }
         

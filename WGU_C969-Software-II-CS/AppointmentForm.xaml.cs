@@ -89,7 +89,39 @@ public partial class AppointmentForm : INotifyPropertyChanged
         } 
     }
     
-    private DateTime AppointmentTime { get; set; }
+    private DateTime? _selectedDate;
+    public DateTime? SelectedDate
+    {
+        get => _selectedDate;
+        set
+        {
+            _selectedDate = value;
+            OnPropertyChanged(nameof(SelectedDate));
+        }
+    }
+    private string _selectedStartTime = "";
+    public string SelectedStartTime
+    {
+        get => _selectedStartTime;
+        set
+        {
+            _selectedStartTime = value;
+            OnPropertyChanged(nameof(SelectedStartTime));
+            Console.WriteLine($"Selected Start Time Change: {value}");
+        } 
+    }
+    private string _selectedEndTime = "";
+    public string SelectedEndTime
+    {
+        get => _selectedEndTime;
+        set
+        {
+            _selectedEndTime = value;
+            OnPropertyChanged(nameof(SelectedEndTime));
+            Console.WriteLine($"Selected End Time Change: {value}");
+        } 
+    }
+    private DateTime[] AppointmentTime { get; set; } = new  DateTime[2];
     
     private void ReadTypesAndLocations()
     {
@@ -135,6 +167,41 @@ public partial class AppointmentForm : INotifyPropertyChanged
         }
     }
     
+    private List<TimeSpan> LoadAvailibleTimes()
+    {
+        List<TimeSpan> allTimes = new List<TimeSpan>();
+        for (var t = new TimeSpan(9, 0, 0); t < new TimeSpan(17, 0, 0); t += TimeSpan.FromMinutes(30))
+        {
+            allTimes.Add(t);
+        }
+        
+        
+        using MySqlConnection connection = new MySqlConnection(MainWindow.ConnectionBuilder.ConnectionString);
+        connection.Open();
+        using MySqlCommand command = new MySqlCommand(
+            @"SELECT TIME(start) as startTime
+              FROM appointment
+              WHERE DATE(start) = @date",
+            connection
+        );
+        command.Parameters.AddWithValue("@date", SelectDateCalendar.SelectedDate);
+        using var reader = command.ExecuteReader();
+        
+        var bookedTimes = new List<TimeSpan>();
+        while (reader.Read())
+        {
+            TimeSpan time = (TimeSpan)reader["startTime"];
+            Console.WriteLine(time.ToString());
+            bookedTimes.Add(time);
+        }
+        
+        return allTimes
+            .Except(bookedTimes
+                .Select(t => new TimeSpan(t.Hours, t.Minutes, 0))
+                .ToList())
+            .ToList();
+    }
+    
     public AppointmentForm(int appointmentId, string currentUsername, int customerId)
     {
         this.DataContext = this;
@@ -149,6 +216,8 @@ public partial class AppointmentForm : INotifyPropertyChanged
         
         this.ReadContact(customerId);
         this.ContactTextBox.Text = this.Contact;
+
+        this.SelectDateCalendar.SelectedDate = DateTime.Now.Date;
         
         URLLabel.Content = WGU_C969_Software_II_CS.Resources.AppointmentForm.URL;
         AppointmentTitleLabel.Content = WGU_C969_Software_II_CS.Resources.AppointmentForm.AppointmentTitle;
@@ -157,12 +226,7 @@ public partial class AppointmentForm : INotifyPropertyChanged
         TypeLabel.Content = WGU_C969_Software_II_CS.Resources.AppointmentForm.Type;
         LocationLabel.Content = WGU_C969_Software_II_CS.Resources.AppointmentForm.Location;
         DescriptionLabel.Content = WGU_C969_Software_II_CS.Resources.AppointmentForm.Description;
-        SelectTimeLabel.Content = WGU_C969_Software_II_CS.Resources.AppointmentForm.SelectTime;
-    }
-
-    private void LoadAvailibleTimes()
-    {
-        
+        SelectStartTimeLabel.Content = WGU_C969_Software_II_CS.Resources.AppointmentForm.SelectStartTime;
     }
     
     private void DoneButtonClicked(object sender, RoutedEventArgs e)
@@ -214,12 +278,31 @@ public partial class AppointmentForm : INotifyPropertyChanged
         BindingExpression? urlBinding = URLTextBox.GetBindingExpression(TextBox.TextProperty);
         urlBinding?.UpdateSource();
         
+        BindingExpression? timeComboBinding = SelectStartTimeComboBox.GetBindingExpression(Selector.SelectedItemProperty);
+        if (timeComboBinding != null)
+        {
+            if (TypeComboBox.SelectedIndex < 0)
+            {
+                Validation.MarkInvalid(timeComboBinding,
+                    new ValidationError(new ExceptionValidationRule(), timeComboBinding));
+            }
+            else
+            {
+                Validation.ClearInvalid(timeComboBinding);
+            }
+        }
+        else
+        {
+            throw new Exception("Failed to bind SelectTimeComboBox");
+        }
+        
         if (titleBinding is { HasError: true } ||
             descriptionBinding is { HasError: true } ||
             locationComboBinding is { HasError: true } ||
             contactBinding is { HasError: true } ||
             typeComboBinding is { HasError: true } ||
-            urlBinding is { HasError: true })
+            urlBinding is { HasError: true } || 
+            timeComboBinding is { HasError: true })
         {
             return;
         }
@@ -230,6 +313,8 @@ public partial class AppointmentForm : INotifyPropertyChanged
         this.Contact = this.ContactTextBox.Text;
         this.SelectedType = this.TypeComboBox.SelectedItem.ToString();
         this.url = this.URLTextBox.Text;
+        
+        //this.AppointmentTime[0] = new DateTime(this.SelectDateCalendar.SelectedDate, SelectedTime.Split())
         
         //this.DataBaseUpdater();
         this.DialogResult = true;
@@ -243,6 +328,28 @@ public partial class AppointmentForm : INotifyPropertyChanged
             double newHeight = e.NewSize.Height;
             DoneButton.Width = newHeight * 2;
         }
+    }
+
+    private void SelectedDateChanged(object sender, SelectionChangedEventArgs e)
+    {
+        BindingExpression? dateCalandarBinding = SelectDateCalendar.GetBindingExpression(Calendar.SelectedDateProperty);
+        if (dateCalandarBinding != null)
+        {
+            if (this.SelectDateCalendar.SelectedDate < DateTime.Now.Date)
+            {
+                Validation.MarkInvalid(dateCalandarBinding,
+                    new ValidationError(new ExceptionValidationRule(), dateCalandarBinding));
+                this.SelectStartTimeComboBox.ItemsSource = new List<string>() {"Pick today or a future date!"};
+                this.SelectStartTimeComboBox.SelectedIndex = 0;
+                return;
+            }
+            Validation.ClearInvalid(dateCalandarBinding);
+        }
+        else
+        {
+            throw new Exception("Failed to bind SelectDateCalendar");
+        }
+        this.SelectStartTimeComboBox.ItemsSource = this.LoadAvailibleTimes().Select(t => t.ToString(@"hh\:mm")).ToList();
     }
     
     public event PropertyChangedEventHandler? PropertyChanged;

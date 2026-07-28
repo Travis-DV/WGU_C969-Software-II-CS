@@ -29,10 +29,13 @@
     <data name="Description" xml:space="preserve">
         <value>Descripción</value>
     </data>
-    <data name="SelectTime" xml:space="preserve">
-        <value>Seleccionar un Tiempo</value>
+    <data name="SelectStartTime" xml:space="preserve">
+        <value>Seleccionar un Tiempo de Inicio</value>
     </data>
     <data name="Type" xml:space="preserve">
         <value>Tipo</value>
+    </data>
+    <data name="SelectEndTime" xml:space="preserve">
+        <value>Seleccionar un Tiempo de Fin</value>
     </data>
 </root>

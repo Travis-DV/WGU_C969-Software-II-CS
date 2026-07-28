@@ -39,7 +39,10 @@
     <data name="Date" xml:space="preserve">
         <value>Date</value>
     </data>
-    <data name="SelectTime" xml:space="preserve">
-        <value>Select Time</value>
+    <data name="SelectStartTime" xml:space="preserve">
+        <value>Select Start Time</value>
+    </data>
+    <data name="SelectEndTime" xml:space="preserve">
+        <value>Select End Time</value>
     </data>
 </root>
