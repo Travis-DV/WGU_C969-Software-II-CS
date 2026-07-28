@@ -8,11 +8,13 @@ using MySqlConnector;
 
 namespace WGU_C969_Software_II_CS;
 
-public partial class AppointmentForm : INotifyPropertyChanged
+public partial class AppointmentForm : INotifyPropertyChanged, IDatabaseInteraction
 {
     // ReSharper disable once InconsistentNaming
     private int ID { get; init; }
     private string CurrentUsername { get; }
+    private int CustomerId { get; }
+    private int UserId { get; }
     
     private string _appointmentTitle = "";
     public string AppointmentTitle
@@ -97,6 +99,7 @@ public partial class AppointmentForm : INotifyPropertyChanged
         {
             _selectedDate = value;
             OnPropertyChanged(nameof(SelectedDate));
+            Console.WriteLine($"Selected Date Change: {value}");
         }
     }
     private string _selectedStartTime = "";
@@ -108,6 +111,13 @@ public partial class AppointmentForm : INotifyPropertyChanged
             _selectedStartTime = value;
             OnPropertyChanged(nameof(SelectedStartTime));
             Console.WriteLine($"Selected Start Time Change: {value}");
+            if (value == "")
+            {
+                //this.SelectedEndTime = "";
+                this.SelectEndTimeComboBox.SelectedIndex = -1;
+                return;
+            }
+            this.SelectEndTimeComboBox.ItemsSource = this.AvailableEndTimes.Select(t => t.ToString(@"hh\:mm")).ToList();
         } 
     }
     private string _selectedEndTime = "";
@@ -122,7 +132,80 @@ public partial class AppointmentForm : INotifyPropertyChanged
         } 
     }
     private DateTime[] AppointmentTime { get; set; } = new  DateTime[2];
+
+    private List<TimeSpan> AllTimes
+    {
+        get
+        {
+            List<TimeSpan> output = new List<TimeSpan>();
+            for (var t = new TimeSpan(9, 0, 0); t < new TimeSpan(17, 0, 0); t += TimeSpan.FromMinutes(30))
+            {
+                output.Add(t);
+            }
+
+            return output;
+        }
+    } 
     
+    private List<(TimeSpan start, TimeSpan end)> BookedRanges
+    {
+        get
+        {
+            using MySqlConnection connection = new MySqlConnection(MainWindow.ConnectionBuilder.ConnectionString);
+            connection.Open();
+            using MySqlCommand command = new MySqlCommand(
+                @"SELECT TIME(start) as startTime, TIME(end) as endTime
+                  FROM appointment
+                  WHERE DATE(start) = @date",
+                connection
+            );
+            command.Parameters.AddWithValue("@date", SelectDateCalendar.SelectedDate);
+            using var reader = command.ExecuteReader();
+            
+            List<(TimeSpan start, TimeSpan end)> output = new List<(TimeSpan start, TimeSpan end)>();
+            while (reader.Read())
+            {
+                TimeSpan start = (TimeSpan)reader["startTime"];
+                TimeSpan end = (TimeSpan)reader["endTime"];
+                Console.WriteLine($"start: {start.ToString()}, end: {end.ToString()}");
+                output.Add((
+                    new TimeSpan(start.Hours, start.Minutes, 0), 
+                    new TimeSpan(end.Hours, end.Minutes, 0)
+                ));
+            }
+
+            return output;
+        }
+    }
+
+    private List<TimeSpan> AvailableStartTimes
+    {
+        get
+        {
+            return this.AllTimes
+                .Where(slot => !this.BookedRanges.Any(r => slot >= r.start && slot <= r.end))
+                .ToList();
+        }
+    }
+
+    private List<TimeSpan> AvailableEndTimes
+    {
+        get
+        {
+            if (this.SelectedStartTime == null || this.SelectedStartTime == "")
+            {
+                return new List<TimeSpan>();;
+            }
+
+
+            return this.AllTimes
+                .Where(t => t > TimeSpan.Parse(this.SelectedStartTime))
+                .TakeWhile(timeSpan => !this.BookedRanges.Any(r => timeSpan >= r.start && timeSpan <= r.end))
+                .ToList();
+        }
+    }
+
+
     private void ReadTypesAndLocations()
     {
         this.Types = new List<string>();
@@ -145,7 +228,7 @@ public partial class AppointmentForm : INotifyPropertyChanged
         }
     }
     
-    private void ReadContact(int customerId)
+    private void ReadContact()
     {
         using MySqlConnection connection = new MySqlConnection(MainWindow.ConnectionBuilder.ConnectionString);
         connection.Open();
@@ -157,7 +240,7 @@ public partial class AppointmentForm : INotifyPropertyChanged
               WHERE customerId = @customerId",
             connection
         );
-        command.Parameters.AddWithValue("@customerId", customerId);
+        command.Parameters.AddWithValue("@customerId", this.CustomerId);
         using var reader = command.ExecuteReader();
         while (reader.Read())
         {
@@ -167,57 +250,25 @@ public partial class AppointmentForm : INotifyPropertyChanged
         }
     }
     
-    private List<TimeSpan> LoadAvailibleTimes()
-    {
-        List<TimeSpan> allTimes = new List<TimeSpan>();
-        for (var t = new TimeSpan(9, 0, 0); t < new TimeSpan(17, 0, 0); t += TimeSpan.FromMinutes(30))
-        {
-            allTimes.Add(t);
-        }
-        
-        
-        using MySqlConnection connection = new MySqlConnection(MainWindow.ConnectionBuilder.ConnectionString);
-        connection.Open();
-        using MySqlCommand command = new MySqlCommand(
-            @"SELECT TIME(start) as startTime
-              FROM appointment
-              WHERE DATE(start) = @date",
-            connection
-        );
-        command.Parameters.AddWithValue("@date", SelectDateCalendar.SelectedDate);
-        using var reader = command.ExecuteReader();
-        
-        var bookedTimes = new List<TimeSpan>();
-        while (reader.Read())
-        {
-            TimeSpan time = (TimeSpan)reader["startTime"];
-            Console.WriteLine(time.ToString());
-            bookedTimes.Add(time);
-        }
-        
-        return allTimes
-            .Except(bookedTimes
-                .Select(t => new TimeSpan(t.Hours, t.Minutes, 0))
-                .ToList())
-            .ToList();
-    }
-    
-    public AppointmentForm(int appointmentId, string currentUsername, int customerId)
+    public AppointmentForm(int appointmentId, string currentUsername, int customerId, int userId)
     {
         this.DataContext = this;
         InitializeComponent();
         
         this.ID = appointmentId;
         this.CurrentUsername = currentUsername;
+        this.UserId = userId;
         
         this.ReadTypesAndLocations();
         TypeComboBox.ItemsSource = Types;
         LocationComboBox.ItemsSource = Locations;
-        
-        this.ReadContact(customerId);
+
+        this.CustomerId = customerId;
+        this.ReadContact();
         this.ContactTextBox.Text = this.Contact;
 
         this.SelectDateCalendar.SelectedDate = DateTime.Now.Date;
+        
         
         URLLabel.Content = WGU_C969_Software_II_CS.Resources.AppointmentForm.URL;
         AppointmentTitleLabel.Content = WGU_C969_Software_II_CS.Resources.AppointmentForm.AppointmentTitle;
@@ -227,6 +278,7 @@ public partial class AppointmentForm : INotifyPropertyChanged
         LocationLabel.Content = WGU_C969_Software_II_CS.Resources.AppointmentForm.Location;
         DescriptionLabel.Content = WGU_C969_Software_II_CS.Resources.AppointmentForm.Description;
         SelectStartTimeLabel.Content = WGU_C969_Software_II_CS.Resources.AppointmentForm.SelectStartTime;
+        SelectEndtTimeLabel.Content = WGU_C969_Software_II_CS.Resources.AppointmentForm.SelectEndTime;
     }
     
     private void DoneButtonClicked(object sender, RoutedEventArgs e)
@@ -278,22 +330,40 @@ public partial class AppointmentForm : INotifyPropertyChanged
         BindingExpression? urlBinding = URLTextBox.GetBindingExpression(TextBox.TextProperty);
         urlBinding?.UpdateSource();
         
-        BindingExpression? timeComboBinding = SelectStartTimeComboBox.GetBindingExpression(Selector.SelectedItemProperty);
-        if (timeComboBinding != null)
+        BindingExpression? startTimeComboBinding = SelectStartTimeComboBox.GetBindingExpression(Selector.SelectedItemProperty);
+        if (startTimeComboBinding != null)
         {
-            if (TypeComboBox.SelectedIndex < 0)
+            if (SelectStartTimeComboBox.SelectedIndex < 0)
             {
-                Validation.MarkInvalid(timeComboBinding,
-                    new ValidationError(new ExceptionValidationRule(), timeComboBinding));
+                Validation.MarkInvalid(startTimeComboBinding,
+                    new ValidationError(new ExceptionValidationRule(), startTimeComboBinding));
             }
             else
             {
-                Validation.ClearInvalid(timeComboBinding);
+                Validation.ClearInvalid(startTimeComboBinding);
             }
         }
         else
         {
             throw new Exception("Failed to bind SelectTimeComboBox");
+        }
+        
+        BindingExpression? endTimeComboBinding = SelectEndTimeComboBox.GetBindingExpression(Selector.SelectedItemProperty);
+        if (endTimeComboBinding != null)
+        {
+            if (SelectEndTimeComboBox.SelectedIndex < 0)
+            {
+                Validation.MarkInvalid(endTimeComboBinding,
+                    new ValidationError(new ExceptionValidationRule(), endTimeComboBinding));
+            }
+            else
+            {
+                Validation.ClearInvalid(endTimeComboBinding);
+            }
+        }
+        else
+        {
+            throw new Exception("Failed to bind SelectEndTimeComboBox");
         }
         
         if (titleBinding is { HasError: true } ||
@@ -302,7 +372,8 @@ public partial class AppointmentForm : INotifyPropertyChanged
             contactBinding is { HasError: true } ||
             typeComboBinding is { HasError: true } ||
             urlBinding is { HasError: true } || 
-            timeComboBinding is { HasError: true })
+            startTimeComboBinding is { HasError: true } || 
+            endTimeComboBinding is { HasError: true })
         {
             return;
         }
@@ -314,9 +385,12 @@ public partial class AppointmentForm : INotifyPropertyChanged
         this.SelectedType = this.TypeComboBox.SelectedItem.ToString();
         this.url = this.URLTextBox.Text;
         
-        //this.AppointmentTime[0] = new DateTime(this.SelectDateCalendar.SelectedDate, SelectedTime.Split())
+        this.AppointmentTime[0] =
+            this.SelectDateCalendar.SelectedDate.Value.Date.Add(TimeSpan.Parse(SelectedStartTime));
+        this.AppointmentTime[1] =
+            this.SelectDateCalendar.SelectedDate.Value.Date.Add(TimeSpan.Parse(SelectedEndTime));
         
-        //this.DataBaseUpdater();
+        this.DataBaseUpdater();
         this.DialogResult = true;
         this.Close();
     }
@@ -349,7 +423,50 @@ public partial class AppointmentForm : INotifyPropertyChanged
         {
             throw new Exception("Failed to bind SelectDateCalendar");
         }
-        this.SelectStartTimeComboBox.ItemsSource = this.LoadAvailibleTimes().Select(t => t.ToString(@"hh\:mm")).ToList();
+        this.SelectStartTimeComboBox.ItemsSource = this.AvailableStartTimes.Select(t => t.ToString(@"hh\:mm")).ToList();
+        this.SelectEndTimeComboBox.ItemsSource = this.AvailableEndTimes.Select(t => t.ToString(@"hh\:mm")).ToList();
+    }
+
+    private void DataBaseUpdater()
+    {
+        using MySqlConnection connection = new MySqlConnection(MainWindow.ConnectionBuilder.ConnectionString);
+        connection.Open();
+        // ReSharper disable once UseRawString
+        using MySqlCommand command = new MySqlCommand(@"
+                    INSERT INTO appointment 
+                        (appointmentId, customerId, userId, title, description, location, contact, type, url, start, end, createDate, createdBy, lastUpdate, lastUpdateBy)
+                    VALUES 
+                        (@appointmentId, @customerId, @userId, @title, @description, @location, @contact, @type, @url, @start, @end, @createDate, @createdBy, @lastUpdate, @lastUpdateBy) AS new
+                    ON DUPLICATE KEY UPDATE
+                        customerId = new.customerId,
+                        userId = new.userId,
+                        title = new.title,
+                        description = new.description,
+                        location = new.location,
+                        contact = new.contact,
+                        type = new.type,
+                        url = new.url,
+                        start = new.start,
+                        end = new.end,
+                        lastUpdate = new.lastUpdate,
+                        lastUpdateBy = new.lastUpdateBy", connection);
+        command.Parameters.AddWithValue("@appointmentId", this.ID);
+        command.Parameters.AddWithValue("@customerId", this.CustomerId);
+        command.Parameters.AddWithValue("@userId", this.UserId);
+        command.Parameters.AddWithValue("@title", this.AppointmentTitle);
+        command.Parameters.AddWithValue("@description", this.Description);
+        command.Parameters.AddWithValue("@location", this.SelectedLocation);
+        command.Parameters.AddWithValue("@contact", this.Contact);
+        command.Parameters.AddWithValue("@type", this.SelectedType);
+        command.Parameters.AddWithValue("@url", this.url);
+        command.Parameters.AddWithValue("@start", this.AppointmentTime[0]);
+        command.Parameters.AddWithValue("@end", this.AppointmentTime[1]);
+        command.Parameters.AddWithValue("@createDate", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+        command.Parameters.AddWithValue("@createdBy", this.CurrentUsername);
+        command.Parameters.AddWithValue("@lastUpdate", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+        command.Parameters.AddWithValue("@lastUpdateBy", this.CurrentUsername);
+
+        command.ExecuteNonQuery();
     }
     
     public event PropertyChangedEventHandler? PropertyChanged;
