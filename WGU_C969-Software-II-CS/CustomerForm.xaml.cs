@@ -12,7 +12,7 @@ namespace WGU_C969_Software_II_CS;
 public partial class CustomerForm : INotifyPropertyChanged, IDatabaseInteraction
 {
     // ReSharper disable once InconsistentNaming
-    private int ID { get; init; }
+    public int ID { get; init; }
     private string CurrentUsername { get; }
 
     private string _firstName = "";

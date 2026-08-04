@@ -8,17 +8,72 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="*" />
-            <RowDefinition Height="2*" />
-            <RowDefinition Height="2*" />
+            <RowDefinition Height="6*" />
+            <RowDefinition Height="5*" />
         </Grid.RowDefinitions>
         
-        <ComboBox x:Name="LanguagesComboBox" Grid.Row="0" SelectionChanged="LanguageSelectedChanged" VerticalAlignment="Top">
+        <!-- <GroupBox Grid.Row="0"></GroupBox> -->
+        <ComboBox x:Name="LanguagesComboBox" Grid.Row="0" SelectionChanged="LanguageSelectedChanged" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="12, 5">
             <ComboBoxItem x:Name="LanguagesComboBoxItemEn">English</ComboBoxItem>
             <ComboBoxItem x:Name="LanguagesComboBoxItemEs">Spanish</ComboBoxItem>
         </ComboBox>
         
-        <Button Content="Open Customer" Click="NewCustomerClicked" Grid.Row="1"/>
-        <Button Content="Open Appointment" Click="NewAppointmentClicked" Grid.Row="2"/>
-        
+        <!-- CUSTOMER LIST GROUPBOX -->
+        <GroupBox Grid.Row="1" Grid.Column="0" Margin="12, 5" Padding="0" BorderThickness="0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="4*"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                
+                <ListView 
+                    x:Name="CustomerListView" 
+                    Grid.Row="0" 
+                    SizeChanged="ListView_SizeChanged"
+                    SelectedIndex="{Binding CustomerSelectedIndex, Mode=TwoWay}"
+                    >
+                    <ListView.View>
+                        <GridView AllowsColumnReorder="True"
+                                  ColumnHeaderToolTip="Customer Information">
+                            <GridViewColumn 
+                                x:Name="CustomerIDColumn" 
+                                Width="25"
+                                Header="CustomerIDColumn"
+                                DisplayMemberBinding="{Binding ID}" />
+                            <GridViewColumn 
+                                x:Name="CustomerFirstNameColumn" 
+                                Header="CustomerFirstNameColumn"
+                                DisplayMemberBinding="{Binding FirstName}" />
+                            <GridViewColumn 
+                                x:Name="CustomerLastNameColumn" 
+                                Header="CustomerLastNameColumn"
+                                DisplayMemberBinding="{Binding LastName}"/>
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+                
+                <!-- CUSTOMER LIST BUTTONS GROUPBOX -->
+                <GroupBox Grid.Row="1" Grid.Column="0" Margin="12, 5" Padding="0" BorderThickness="0">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="2*"/>
+                        </Grid.ColumnDefinitions>
+                        <Button x:Name="CustomerModButton"
+                                Grid.Column="0" Grid.Row="0" Margin="2, 0"
+                                Click="CustomerModButtonClicked">ModButton</Button>
+                        <Button x:Name="CustomerDeleteButton" 
+                                Grid.Column="1" Grid.Row="0" Margin="2, 0"
+                                Click="CustomerDeleteButtonClicked">DeleteButton</Button>
+                        <Button x:Name="CustomerClearButton" 
+                                Grid.Column="2" Grid.Row="0" Margin="2, 0"
+                                HorizontalAlignment="Right"
+                                Click="CustomerClearButtonClicked">ClearButton</Button>
+                        
+                    </Grid>
+                </GroupBox>
+            </Grid>
+        </GroupBox>
     </Grid>
 </Window>
