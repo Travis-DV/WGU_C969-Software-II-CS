@@ -6,6 +6,9 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
+using System.Windows.Data;
+using System.Windows.Markup;
 
 namespace WGU_C969_Software_II_CS;
 
@@ -16,7 +19,8 @@ public partial class MainWindow : INotifyPropertyChanged
 {
     public delegate void PropertyChangedDelegate(string name);
 
-    private string CurrentUsername = "Admin";
+    private string CurrentUsername { get; init; }
+    private int ID { get; init; } = -1;
     
     private bool CustomerMod
     {
@@ -24,11 +28,11 @@ public partial class MainWindow : INotifyPropertyChanged
         {
             if (value)
             {
-                this.CustomerModButton.Content = "mod"; //TODO Change to correct local
+                this.CustomerModButton.Content = WGU_C969_Software_II_CS.Resources.MainWindow.CustomerModifyButton;
             }
             else if (!value)
             {
-                this.CustomerModButton.Content = "add"; //TODO Change to correct local
+                this.CustomerModButton.Content = WGU_C969_Software_II_CS.Resources.MainWindow.CustomerAddButton;
             }
         } 
     }
@@ -59,37 +63,265 @@ public partial class MainWindow : INotifyPropertyChanged
             int i = value;
             if (value > this.Customers.Count)
             {
-                Console.WriteLine("Value greater than countries");
+                Console.WriteLine("Value greater than Customers");
                 return;
             }
-            SelectedCustomerId = this.Customers[value].ID;
+
+            if (value == -1)
+            {
+                SelectedCustomerId = -1;
+            }
+            else if (value != -1)
+            {
+                SelectedCustomerId = this.Customers[value].ID;
+            }
+            this.LoadAppointmentDisplay();
+            Console.WriteLine($"CustomerSelectedIndex Changed {value}");
             OnPropertyChanged(nameof(CustomerSelectedIndex));
         }
     }
     
     private AdvancedList<CustomerForm> Customers { get; set; }
-
-    private void LoadCustomerNames()
+    
+    private bool AppointmentMod
     {
-        ObservableCollection<CustomerForm> Customers = new ObservableCollection<CustomerForm>();
+        set
+        {
+            if (value)
+            {
+                this.AppointmentModButton.Content = WGU_C969_Software_II_CS.Resources.MainWindow.AppointmentModifyButton;
+            }
+            else if (!value)
+            {
+                this.AppointmentModButton.Content = WGU_C969_Software_II_CS.Resources.MainWindow.AppointmentAddButton;
+            }
+        } 
+    }
+    
+    private int SelectedAppointmentId = -1;
+    public int AppointmentSelectedIndex
+    {
+        get
+        {
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
+            if (this.Appointments == null)
+            {
+                return -1;
+            }
+            return this.Appointments.FindIndex(c => c.ID == SelectedAppointmentId);
+        }
+        set
+        {
+            if (value != null && value != -1)
+            {
+                AppointmentMod = true;
+            }
+            else
+            {
+                AppointmentMod = false;
+            }
+            
+            int i = value;
+            if (value > this.Appointments.Count)
+            {
+                Console.WriteLine("Value greater than Appointments");
+                return;
+            }
+
+            if (value == -1)
+            {
+                SelectedAppointmentId = -1;
+            }
+            else if (value != -1)
+            {
+                SelectedAppointmentId = this.Appointments[value].ID;
+            }
+            Console.WriteLine($"SelectedAppointmentId Changed {value}");
+            OnPropertyChanged(nameof(AppointmentSelectedIndex));
+        }
+    }
+    
+    private AdvancedList<AppointmentForm> Appointments { get; set; }
+    
+    private DateTime? _selectedDate;
+    public DateTime? SelectedDate
+    {
+        get => _selectedDate;
+        set
+        {
+            _selectedDate = value;
+            this.LoadAppointmentDisplay();
+            OnPropertyChanged(nameof(SelectedDate));
+            Console.WriteLine($"Selected Date Change: {value}");
+        }
+    }
+
+    private void LoadCustomerDisplay()
+    {
+        ObservableCollection<CustomerForm> customers = new ObservableCollection<CustomerForm>();
         using (MySqlConnection connection = new MySqlConnection(MainWindow.ConnectionBuilder.ConnectionString))
         {
             connection.Open();
             using (MySqlCommand command =
-                   new MySqlCommand($"SELECT customerId FROM  customer", connection))
+                   new MySqlCommand($"SELECT customerId FROM customer", connection))
             {
                 using var reader = command.ExecuteReader();
                 while (reader.Read())
                 {
-                    Customers.Add(new CustomerForm(int.Parse(reader["customerId"].ToString()), this.CurrentUsername));
+                    customers.Add(new CustomerForm(int.Parse(reader["customerId"].ToString()), this.CurrentUsername));
                 }
             }
         }
-        this.CustomerListView.ItemsSource = Customers;
+        this.CustomerListView.ItemsSource = customers;
+    }
+    
+    private void LoadAppointmentDisplay()
+    {
+        /*BindingExpression? customerListBinding = this.CustomerListView.GetBindingExpression(Selector.SelectedIndexProperty);
+        BindingExpression? selectDateBinding = this.DatePickCalendar.GetBindingExpression(Selector.SelectedIndexProperty);
+        if (customerListBinding != null)
+        {
+            Validation.ClearInvalid(customerListBinding);
+        }
+        else
+        {
+            throw new Exception("Failed to bind CustomerListView");
+        }
+        if (selectDateBinding != null)
+        {
+            Validation.ClearInvalid(selectDateBinding);
+        }
+        else
+        {
+            throw new Exception("Failed to bind DatePickCalendar");
+        }
+        
+        if (this.SelectedCustomerId == null || this.SelectedCustomerId == -1 || !this.SelectedDate.HasValue)
+        {
+            
+            Validation.MarkInvalid(customerListBinding,
+                new ValidationError(new ExceptionValidationRule(), customerListBinding));
+
+            Validation.MarkInvalid(selectDateBinding,
+                new ValidationError(new ExceptionValidationRule(), customerListBinding));
+            
+            return;
+        }*/
+        if ((this.SelectedCustomerId == null || this.SelectedCustomerId == -1) && !this.SelectedDate.HasValue)
+        {
+            return;
+        }
+
+        int? customerId = null;
+        if (this.SelectedCustomerId != -1)
+        {
+            customerId  = this.SelectedCustomerId;
+        }
+
+        ObservableCollection<DisplayAppointment> appointments = new ObservableCollection<DisplayAppointment>();
+        using (MySqlConnection connection = new MySqlConnection(MainWindow.ConnectionBuilder.ConnectionString))
+        {
+            connection.Open();
+            using (MySqlCommand command =
+                   new MySqlCommand(@"
+SELECT 
+    appointment.appointmentId, 
+    appointment.customerId, 
+    appointment.userId, 
+    appointment.start,
+    appointment.title,
+    appointment.description,
+    customer.customerName
+FROM appointment
+JOIN customer ON appointment.customerId = customer.customerId
+WHERE (@date IS NULL OR DATE(appointment.start) = @date)
+  AND (@customerId IS NULL OR appointment.customerId = @customerId);", connection))
+            {
+                command.Parameters.AddWithValue("@date", this.SelectedDate);
+                command.Parameters.AddWithValue("@customerId", customerId);
+                using var reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    DateTime start = DateTime.Parse(reader["start"].ToString());
+                    string detail = "";
+                    if (this.SelectedCustomerId == -1 && this.SelectedDate.HasValue)
+                    {
+                        detail = reader["customerName"].ToString();
+                        this.Detail.Header = WGU_C969_Software_II_CS.Resources.MainWindow.CustomerNameDetail;
+                    }
+                    else if (this.SelectedCustomerId != -1 && !this.SelectedDate.HasValue)
+                    {
+                        detail = DateOnly.FromDateTime(start).ToString();
+                        this.Detail.Header = WGU_C969_Software_II_CS.Resources.MainWindow.DateDetail;
+                    }
+                    else if (this.SelectedCustomerId != -1 && this.SelectedDate.HasValue)
+                    {
+                        detail = reader["description"].ToString();
+                        this.Detail.Header = WGU_C969_Software_II_CS.Resources.MainWindow.DescriptionDetail;
+                    }
+                    
+                    appointments.Add(new DisplayAppointment()
+                    {
+                        ID = int.Parse(reader["appointmentId"].ToString()),
+                        CustomerId =  int.Parse(reader["customerId"].ToString()),
+                        UserId = int.Parse(reader["userId"].ToString()),
+                        StartTime = start.TimeOfDay,
+                        AppointmentTitle = reader["title"].ToString(),
+                        Detail = detail
+                    });
+                }
+            }
+        }
+        this.AppointmentListView.ItemsSource = appointments;
+    }
+
+    public void Localize()
+    {
+        this.CustomerIDColumn.Header = WGU_C969_Software_II_CS.Resources.MainWindow.ItemIDColumn;
+        this.CustomerFirstNameColumn.Header = WGU_C969_Software_II_CS.Resources.MainWindow.CustomerFirstNameColumn;
+        this.CustomerLastNameColumn.Header = WGU_C969_Software_II_CS.Resources.MainWindow.CustomerLastNameColumn;
+        if (this.CustomerListView.SelectedIndex == -1)
+        {
+            this.CustomerMod = false;
+        }
+        else if (this.CustomerListView.SelectedIndex != -1)
+        {
+            this.CustomerMod = true;
+        }
+        this.CustomerDeleteButton.Content = WGU_C969_Software_II_CS.Resources.MainWindow.CustomerDeleteButton;
+        this.CustomerClearButton.Content = WGU_C969_Software_II_CS.Resources.MainWindow.ClearSelectButton;
+        
+        this.DateClearButton.Content = WGU_C969_Software_II_CS.Resources.MainWindow.ClearSelectButton;
+        
+        this.AppointmentIDColumn.Header = WGU_C969_Software_II_CS.Resources.MainWindow.ItemIDColumn;
+        this.AppointmentStartTimeColumn.Header = WGU_C969_Software_II_CS.Resources.MainWindow.AppointmentStartTimeColumn;
+        this.AppointmentTitleColumn.Header = WGU_C969_Software_II_CS.Resources.MainWindow.AppointmentTitleColumn;
+        if (this.AppointmentListView.SelectedIndex == -1)
+        {
+            this.AppointmentMod = false;
+        }
+        else if (this.AppointmentListView.SelectedIndex != -1)
+        {
+            this.AppointmentMod = true;
+        }
+        this.AppointmentDeleteButton.Content = WGU_C969_Software_II_CS.Resources.MainWindow.AppointmentDeleteButton;
     }
     
     public MainWindow()
     {
+        if (this.ID == -1)
+        {
+            LoginWindow loginWindow = new LoginWindow();
+            loginWindow.ShowDialog();
+            if (loginWindow.DialogResult != true)
+            {
+                this.Close();
+                return;
+            }
+            this.ID = loginWindow.ID;
+            this.CurrentUsername = loginWindow.Username;
+        }
+        
         this.DataContext = this;
         InitializeComponent();
         
@@ -104,7 +336,7 @@ public partial class MainWindow : INotifyPropertyChanged
         
         MainWindow.CheckCreation(this.CurrentUsername);
 
-        this.Customers = new AdvancedList<CustomerForm>(this.LoadCustomerNames);
+        this.Customers = new AdvancedList<CustomerForm>(this.LoadCustomerDisplay);
         using (MySqlConnection connection = new MySqlConnection(MainWindow.ConnectionBuilder.ConnectionString))
         {
             connection.Open();
@@ -118,22 +350,56 @@ public partial class MainWindow : INotifyPropertyChanged
                 }
             }
         }
-        //this.LoadCustomerNames();
         this.CustomerMod = false;
-    }
-    
-    private void NewAppointmentClicked(object sender, RoutedEventArgs e)
-    {
-        using MySqlConnection connection = new MySqlConnection(MainWindow.ConnectionBuilder.ConnectionString);
-        connection.Open();
-        using MySqlCommand command = new MySqlCommand("SELECT IFNULL(MAX(customerId), 0) + 1 FROM appointment;", connection);
-        int nextId = Convert.ToInt32(command.ExecuteScalar());
         
-        AppointmentForm newAppointment = new AppointmentForm(nextId, this.CurrentUsername, 1, 0)
+        
+        this.Appointments = new AdvancedList<AppointmentForm>(this.LoadAppointmentDisplay);
+        using (MySqlConnection connection = new MySqlConnection(MainWindow.ConnectionBuilder.ConnectionString))
         {
-            Owner = this
-        };
-        newAppointment.ShowDialog();
+            connection.Open();
+            using (MySqlCommand command =
+                   new MySqlCommand($"SELECT appointmentId, customerId, userId FROM appointment", connection))
+            {
+                using var reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    this.Appointments.Add(new AppointmentForm(int.Parse(reader["appointmentId"].ToString()),
+                        this.CurrentUsername, int.Parse(reader["customerId"].ToString()),
+                        int.Parse(reader["userId"].ToString())));
+                }
+            }
+        }
+        this.AppointmentMod = false;
+        
+        using (MySqlConnection connection = new MySqlConnection(MainWindow.ConnectionBuilder.ConnectionString))
+        {
+            connection.Open();
+            using (MySqlCommand command =
+                   new MySqlCommand(@"
+SELECT 
+    appointment.appointmentId, 
+    appointment.customerId, 
+    appointment.userId, 
+    appointment.start,
+    appointment.title,
+    appointment.description,
+    customer.customerName
+FROM appointment
+JOIN customer ON appointment.customerId = customer.customerId
+WHERE appointment.start BETWEEN NOW() and DATE_ADD(NOW(), INTERVAL 15 MINUTE);", connection))
+            {
+                using var reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    string appointmentTitle = reader.GetString("title");
+                    string customerName = reader.GetString("customerName");
+                    DateTime appointmentStartTime = reader.GetDateTime("start");
+                    MessageBox.Show($"Appointment {appointmentTitle} for {customerName} starts in less than 15 minutes! ({appointmentStartTime.TimeOfDay})");
+                }
+            }
+        }
+        
+        this.Localize();
     }
     
     
@@ -151,8 +417,10 @@ public partial class MainWindow : INotifyPropertyChanged
             culture = new CultureInfo("en-US");
         } 
         
+        Thread.CurrentThread.CurrentCulture = culture;
         Thread.CurrentThread.CurrentUICulture = culture;
         
+        this.Localize();
     }
     
     private void CustomerModButtonClicked(object sender, RoutedEventArgs e)
@@ -180,7 +448,7 @@ public partial class MainWindow : INotifyPropertyChanged
             newCustomer.ShowDialog();
         }
         
-        this.Customers = new AdvancedList<CustomerForm>(this.LoadCustomerNames);
+        this.Customers = new AdvancedList<CustomerForm>(this.LoadCustomerDisplay);
         using (MySqlConnection connection = new MySqlConnection(MainWindow.ConnectionBuilder.ConnectionString))
         {
             connection.Open();
@@ -222,20 +490,133 @@ public partial class MainWindow : INotifyPropertyChanged
     
     private void CustomerClearButtonClicked(object sender, RoutedEventArgs e)
     {
+        this.CustomerSelectedIndex = -1;
         this.CustomerListView.SelectedIndex = -1;
+    }
+    
+    private void DateClearButtonClicked(object sender, RoutedEventArgs e)
+    {
+        this.DatePickCalendar.SelectedDate = null;
+    }
+    
+    private void AppointmentModButtonClicked(object sender, RoutedEventArgs e)
+    {
+        if (this.AppointmentSelectedIndex == -1)
+        {
+            BindingExpression? customerListBinding = CustomerListView.GetBindingExpression(Selector.SelectedIndexProperty);
+            if (customerListBinding != null)
+            {
+                if (CustomerListView.SelectedIndex < 0)
+                {
+                    Validation.MarkInvalid(customerListBinding,
+                        new ValidationError(new ExceptionValidationRule(), customerListBinding));
+                    return;
+                }
+                else
+                {
+                    Validation.ClearInvalid(customerListBinding);
+                }
+            }
+            else
+            {
+                throw new Exception("Failed to bind CustomerListView");
+            }
+            
+            using MySqlConnection connection = new MySqlConnection(MainWindow.ConnectionBuilder.ConnectionString);
+            connection.Open();
+            using MySqlCommand command = new MySqlCommand("SELECT IFNULL(MAX(appointmentId), 0) + 1 FROM appointment;", connection);
+            
+            AppointmentForm newCustomer = new AppointmentForm(int.Parse(command.ExecuteScalar().ToString()), this.CurrentUsername, this.SelectedCustomerId, this.ID)
+            {
+                Owner = this
+            };
+            newCustomer.ShowDialog();
+        }
+        
+        List<AppointmentForm> moddedAppointments = new List<AppointmentForm>();
+        foreach (DisplayAppointment selectedItem in this.AppointmentListView.SelectedItems)
+        {
+            AppointmentForm newAppointment = new AppointmentForm(selectedItem.ID, this.CurrentUsername, selectedItem.CustomerId, selectedItem.UserId)
+            {
+                Owner = this
+            };
+            newAppointment.ShowDialog();
+        }
+        
+        this.Appointments = new AdvancedList<AppointmentForm>(this.LoadAppointmentDisplay);
+        using (MySqlConnection connection = new MySqlConnection(MainWindow.ConnectionBuilder.ConnectionString))
+        {
+            connection.Open();
+            using (MySqlCommand command =
+                   new MySqlCommand($"SELECT appointmentId, customerId, userId FROM appointment", connection))
+            {
+                using var reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    this.Appointments.Add(new AppointmentForm(int.Parse(reader["appointmentId"].ToString()), this.CurrentUsername, int.Parse(reader["customerId"].ToString()), int.Parse(reader["userId"].ToString())));
+                }
+            }
+        }
+    }
+    
+    private void AppointmentDeleteButtonClicked(object sender, RoutedEventArgs e)
+    {
+        foreach (AppointmentForm selectedItem in AppointmentListView.SelectedItems)
+        {
+            string customerName = "";
+            using (MySqlConnection connection = new MySqlConnection(MainWindow.ConnectionBuilder.ConnectionString))
+            {
+                connection.Open();
+                using (MySqlCommand command =
+                       new MySqlCommand($"SELECT customerName FROM customer WHERE customerId = @customerId", connection))
+                {
+                    command.Parameters.AddWithValue("@customerId", selectedItem.ID);
+                    using var reader = command.ExecuteReader();
+                    while (reader.Read())
+                    {
+                        customerName = reader["customerName"].ToString();
+                    }
+                }
+            }
+            
+            MessageBoxResult result = MessageBox.Show(
+                $"Are you sure you want to delete {selectedItem.Title} for {customerName} (ID: {selectedItem.ID}) customer entry?",
+                "Confirm Delete",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                using MySqlConnection connection = new MySqlConnection(MainWindow.ConnectionBuilder.ConnectionString);
+                connection.Open();
+                using MySqlCommand command = new MySqlCommand("DELETE FROM appointment WHERE appointmentId = @id", connection);
+                command.Parameters.AddWithValue("@id", selectedItem.ID);
+                command.ExecuteNonQuery();
+                this.Appointments.Remove(selectedItem);
+            }
+        }
     }
     
     private void ListView_SizeChanged(object sender, SizeChangedEventArgs e)
     {
         var listView = (ListView)sender;
 
+        if (listView.View is not GridView gridView || gridView.Columns.Count < 3)
+        {
+            return;
+        }
+        
         // subtract a bit for the vertical scrollbar / border so columns don't wrap
         double width = listView.ActualWidth - SystemParameters.VerticalScrollBarWidth - 10;
 
         if (width > 0)
         {
-            CustomerFirstNameColumn.Width = (width-26) / 2;
-            CustomerLastNameColumn.Width = (width-26) / 2;
+            double colWidth = (width - 13) / (gridView.Columns.Count-1);
+            for (int i = 1; i < gridView.Columns.Count; i++)
+            {
+                gridView.Columns[i].Width = colWidth;
+                gridView.Columns[i].Width = colWidth; 
+            }
         }
     }
 
@@ -247,29 +628,29 @@ public partial class MainWindow : INotifyPropertyChanged
         Database = "client_schedule"
     }; 
 
-    private static async void CheckCreation(string currentUsername)
+    private static void CheckCreation(string currentUsername)
     {
-        await using (MySqlConnection testconn = new  MySqlConnection("Server=localhost;User ID=sqlUser;Password=Passw0rd!;"))
+        using (MySqlConnection testconn = new  MySqlConnection("Server=localhost;User ID=sqlUser;Password=Passw0rd!;"))
         {
             bool databaseExists = false;
             
             Console.WriteLine("Connecting to server...");
-            await testconn.OpenAsync();
+            testconn.Open();
             Console.WriteLine("Connected");
 
-            await using (MySqlCommand command = new MySqlCommand("SELECT VERSION();", testconn))
+            using (MySqlCommand command = new MySqlCommand("SELECT VERSION();", testconn))
             {
-                await using var reader = await command.ExecuteReaderAsync();
+                using var reader = command.ExecuteReader();
 
-                while (await reader.ReadAsync())
+                while (reader.Read())
                 {
                     Console.WriteLine($"MySQL Server Version: {reader.GetString(0)}");
                 }
             }
             
-            await using (MySqlCommand command = new MySqlCommand("Show DATABASES", testconn))
+            using (MySqlCommand command = new MySqlCommand("Show DATABASES", testconn))
             {
-                await using var reader = await command.ExecuteReaderAsync();
+                using var reader = command.ExecuteReader();
             
                 string databaseListString = "";
                 while (reader.Read())
@@ -289,14 +670,14 @@ public partial class MainWindow : INotifyPropertyChanged
             {
                 Console.WriteLine("Creating database...");
             
-                await using (MySqlCommand command = new MySqlCommand("CREATE DATABASE client_schedule;", testconn))
+                using (MySqlCommand command = new MySqlCommand("CREATE DATABASE client_schedule;", testconn))
                 {
                     command.ExecuteNonQuery();
                 }
 
-                await using (MySqlCommand command = new MySqlCommand("SHOW DATABASES", testconn))
+                using (MySqlCommand command = new MySqlCommand("SHOW DATABASES", testconn))
                 {
-                    await using var reader = await command.ExecuteReaderAsync();
+                    using var reader = command.ExecuteReader();
 
                     while (reader.Read())
                     {
@@ -307,12 +688,12 @@ public partial class MainWindow : INotifyPropertyChanged
         }
         
         
-        await using MySqlConnection connection = new MySqlConnection(ConnectionBuilder.ConnectionString);
-        await connection.OpenAsync();
+        using MySqlConnection connection = new MySqlConnection(ConnectionBuilder.ConnectionString);
+        connection.Open();
         string[] databaseTables;
-        await using (MySqlCommand command = new MySqlCommand("SHOW TABLES", connection))
+        using (MySqlCommand command = new MySqlCommand("SHOW TABLES", connection))
         {
-            await using var reader = await command.ExecuteReaderAsync();
+            using var reader = command.ExecuteReader();
             
             string databaseTablesString = "";
             while (reader.Read())
@@ -327,7 +708,7 @@ public partial class MainWindow : INotifyPropertyChanged
         if (!databaseTables.Contains("country"))
         {
             Console.WriteLine("Generating country Table");
-            await using (MySqlCommand command = new MySqlCommand(
+            using (MySqlCommand command = new MySqlCommand(
                              @"
                         CREATE TABLE country 
                        (
@@ -344,7 +725,7 @@ public partial class MainWindow : INotifyPropertyChanged
                 command.ExecuteNonQuery();
             }
             
-            await using (MySqlCommand command = new MySqlCommand(
+            using (MySqlCommand command = new MySqlCommand(
                                      @"
                                         INSERT INTO country 
                                             (countryId, country, createDate, createdBy, lastUpdate, lastUpdateBy)
@@ -362,7 +743,7 @@ public partial class MainWindow : INotifyPropertyChanged
     
                 command.ExecuteNonQuery();
             }
-            await using (MySqlCommand command = new MySqlCommand(
+            using (MySqlCommand command = new MySqlCommand(
                              @"
                                         INSERT INTO country 
                                             (countryId, country, createDate, createdBy, lastUpdate, lastUpdateBy)
@@ -380,9 +761,9 @@ public partial class MainWindow : INotifyPropertyChanged
     
                 command.ExecuteNonQuery();
             }
-            await using (MySqlCommand command = new MySqlCommand("SELECT * FROM  country", connection))
+            using (MySqlCommand command = new MySqlCommand("SELECT * FROM  country", connection))
             {
-                await using var reader = await command.ExecuteReaderAsync();
+                using var reader = command.ExecuteReader();
                 while (reader.Read())
                 {
                     Console.WriteLine(
@@ -400,7 +781,7 @@ public partial class MainWindow : INotifyPropertyChanged
         if (!databaseTables.Contains("city"))
         {
             Console.WriteLine("Generating city Table");
-            await using (MySqlCommand command = new MySqlCommand(
+            using (MySqlCommand command = new MySqlCommand(
                              @"
                             CREATE TABLE city 
                             (
@@ -423,7 +804,7 @@ public partial class MainWindow : INotifyPropertyChanged
         if (!databaseTables.Contains("address"))
         {
             Console.WriteLine("Generating address Table");
-            await using (MySqlCommand command = new MySqlCommand(
+            using (MySqlCommand command = new MySqlCommand(
                              @"
                             CREATE TABLE address 
                             (
@@ -449,7 +830,7 @@ public partial class MainWindow : INotifyPropertyChanged
         if (!databaseTables.Contains("customer"))
         {
             Console.WriteLine("Generating customer Table");
-            await using (MySqlCommand command = new MySqlCommand(
+            using (MySqlCommand command = new MySqlCommand(
                              @"
                             CREATE TABLE customer 
                             (
@@ -473,7 +854,7 @@ public partial class MainWindow : INotifyPropertyChanged
         if (!databaseTables.Contains("user"))
         {
             Console.WriteLine("Generating user Table");
-            await using (MySqlCommand command = new MySqlCommand(
+            using (MySqlCommand command = new MySqlCommand(
                              @"
                             CREATE TABLE user 
                             (
@@ -496,7 +877,7 @@ public partial class MainWindow : INotifyPropertyChanged
         if (!databaseTables.Contains("appointment"))
         {
             Console.WriteLine("Generating appointment Table");
-            await using (MySqlCommand cmd = new MySqlCommand(
+            using (MySqlCommand cmd = new MySqlCommand(
                              @"
                             CREATE TABLE appointment 
                             (
@@ -532,6 +913,16 @@ public partial class MainWindow : INotifyPropertyChanged
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
+}
+
+public class DisplayAppointment
+{
+    public int ID { get; init; }
+    public int CustomerId { get; init; } 
+    public int UserId { get; init; } 
+    public TimeSpan StartTime { get; init; }
+    public string AppointmentTitle { get; init; }
+    public string Detail { get; init; }
 }
 
 public class BasicTextValidator : ValidationRule

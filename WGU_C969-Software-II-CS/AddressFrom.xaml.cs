@@ -54,10 +54,19 @@ public partial class AddressFrom : INotifyPropertyChanged, IDatabaseInteraction
             int i = value;
             if (value > this.Cities.Count)
             {
-                i = this.Cities.FindIndex(c => c.ID == value);
-                Console.WriteLine("Value greater than cities");
+                Console.WriteLine("Value greater than Customers");
+                return;
             }
-            SelectedCityId = this.Cities[i].ID;
+
+            if (value == -1)
+            {
+                SelectedCityId = -1;
+            }
+            else if (value != -1)
+            {
+                SelectedCityId = this.Cities[value].ID;
+            }
+            Console.WriteLine($"SelectedCityIndex Changed {value}");
             OnPropertyChanged(nameof(SelectedCityIndex));
         }
     }

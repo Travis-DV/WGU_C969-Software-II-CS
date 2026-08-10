@@ -11,10 +11,10 @@ namespace WGU_C969_Software_II_CS;
 public partial class AppointmentForm : INotifyPropertyChanged, IDatabaseInteraction
 {
     // ReSharper disable once InconsistentNaming
-    private int ID { get; init; }
-    private string CurrentUsername { get; }
-    private int CustomerId { get; }
-    private int UserId { get; }
+    public int ID { get; init; }
+    private string CurrentUsername { get; init; }
+    public int CustomerId { get; init; }
+    public int UserId { get; init; }
     
     private string _appointmentTitle = "";
     public string AppointmentTitle
@@ -192,7 +192,7 @@ public partial class AppointmentForm : INotifyPropertyChanged, IDatabaseInteract
     {
         get
         {
-            if (this.SelectedStartTime == null || this.SelectedStartTime == "")
+            if (this.SelectedStartTime == null || this.SelectedStartTime == "" || this.SelectedStartTime == "Pick today or a future date!")
             {
                 return new List<TimeSpan>();;
             }
@@ -269,6 +269,26 @@ public partial class AppointmentForm : INotifyPropertyChanged, IDatabaseInteract
 
         this.SelectDateCalendar.SelectedDate = DateTime.Now.Date;
         
+        using MySqlConnection connection = new MySqlConnection(MainWindow.ConnectionBuilder.ConnectionString);
+        connection.Open();
+        using MySqlCommand command = new MySqlCommand($"SELECT * FROM appointment WHERE appointmentId = @id", connection);
+        command.Parameters.AddWithValue("@id", this.ID);
+        using (var reader = command.ExecuteReader())
+        {
+            if (reader.Read())
+            {
+                this.AppointmentTitle = reader["title"].ToString() ?? "";
+                this.Description = reader["description"].ToString() ?? "";
+                this.LocationComboBox.SelectedItem = reader["location"].ToString();
+                this.TypeComboBox.SelectedItem = reader["type"].ToString();
+                this.url = reader["url"].ToString();
+                DateTime start = DateTime.Parse(reader["start"].ToString());
+                this.SelectDateCalendar.SelectedDate = start;
+                this.SelectStartTimeComboBox.SelectedItem = start.TimeOfDay.ToString();
+                DateTime end = DateTime.Parse(reader["end"].ToString());
+                this.SelectEndTimeComboBox.SelectedItem = start.TimeOfDay.ToString();
+            }
+        }
         
         URLLabel.Content = WGU_C969_Software_II_CS.Resources.AppointmentForm.URL;
         AppointmentTitleLabel.Content = WGU_C969_Software_II_CS.Resources.AppointmentForm.AppointmentTitle;

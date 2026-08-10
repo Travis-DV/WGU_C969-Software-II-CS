@@ -1,0 +1,59 @@
+﻿<Window x:Class="WGU_C969_Software_II_CS.LoginWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:local="clr-namespace:WGU_C969_Software_II_CS"
+        mc:Ignorable="d"
+        Title="LoginWindow" Height="200" Width="400">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <Label Grid.Row="0" HorizontalAlignment="Center" FontWeight="Bold" VerticalAlignment="Center">Username=Admin; Password=Admin</Label>
+        <GroupBox Grid.Row="1" Grid.Column="0" Margin="12, 5, 12, 0" Padding="0" BorderThickness="0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"></ColumnDefinition>
+                    <ColumnDefinition Width="2*"></ColumnDefinition>
+                </Grid.ColumnDefinitions>
+                <Label x:Name="UsernameLabel" 
+                       Grid.Column="0" Grid.Row="0"
+                       HorizontalAlignment="Right" VerticalAlignment="Center" 
+                       Margin="12,0">
+                    UsernameLabel
+                </Label>
+                <TextBox x:Name="UsernameTextBox" 
+                         Grid.Column="1" Grid.Row="0"
+                         HorizontalAlignment="Left" VerticalAlignment="Center" 
+                         Margin="12,0" Width="200">
+                </TextBox>
+            </Grid>
+        </GroupBox>
+        
+        <GroupBox Grid.Row="2" Grid.Column="0" Margin="12, 5, 12, 0" Padding="0" BorderThickness="0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"></ColumnDefinition>
+                    <ColumnDefinition Width="2*"></ColumnDefinition>
+                </Grid.ColumnDefinitions>
+                <Label x:Name="PasswordLabel" 
+                       Grid.Column="0" Grid.Row="0"
+                       HorizontalAlignment="Right" VerticalAlignment="Center" 
+                       Margin="12,0">
+                    PasswordLabel
+                </Label>
+                <PasswordBox x:Name="PasswordTextBox" 
+                             Grid.Column="1" Grid.Row="0"
+                             HorizontalAlignment="Left" VerticalAlignment="Center" 
+                             Margin="12,0" Width="200" 
+                             PasswordChar="*">
+                </PasswordBox>
+            </Grid>
+        </GroupBox>
+        <Button x:Name="DoneButton" Grid.Column="0" Grid.Row="3" HorizontalAlignment="Right" SizeChanged="MyTextBox_SizeChanged" Margin="10" Click="DoneButtonClicked">Done</Button>
+    </Grid>
+</Window>

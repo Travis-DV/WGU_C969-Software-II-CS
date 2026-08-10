@@ -43,12 +43,23 @@ public partial class CityForm : INotifyPropertyChanged, IDatabaseInteraction
         set
         {
             int i = value;
+            
+            
             if (value > this.Countries.Count)
             {
-                i = this.Countries.FindIndex(c => c.ID == value);
-                Console.WriteLine("Value greater than countries");
+                Console.WriteLine("Value greater than Countries");
+                return;
             }
-            SelectedCountryId = this.Countries[i].ID;
+
+            if (value == -1)
+            {
+                SelectedCountryId = -1;
+            }
+            else if (value != -1)
+            {
+                SelectedCountryId = this.Countries[value].ID;
+            }
+            Console.WriteLine($"SelectedCountryIndex Changed {value}");
             OnPropertyChanged(nameof(SelectedCountryIndex));
         }
     }
@@ -64,9 +75,9 @@ public partial class CityForm : INotifyPropertyChanged, IDatabaseInteraction
         this.CurrentUsername = currentUsername;
         this.Countries = new AdvancedList<CountryRecord>(this.RenderCountriesComboBox);
         this.ReadCountries();
-
-         using MySqlConnection connection = new MySqlConnection(MainWindow.ConnectionBuilder.ConnectionString);
-         connection.Open();
+        
+        using MySqlConnection connection = new MySqlConnection(MainWindow.ConnectionBuilder.ConnectionString);
+        connection.Open();
         using MySqlCommand command = new MySqlCommand($"SELECT * FROM  city WHERE cityId = @id", connection);
         command.Parameters.AddWithValue("@id", this.ID);
         using (var reader = command.ExecuteReader())
