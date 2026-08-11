@@ -62,4 +62,28 @@
     <data name="PasswordLabel" xml:space="preserve">
         <value>Contraseña</value>
     </data>
+    <data name="AppointmentGeneric" xml:space="preserve">
+        <value>Cita</value>
+    </data>
+    <data name="PossessiveGeneric" xml:space="preserve">
+        <value>de</value>
+    </data>
+    <data name="StartsIn" xml:space="preserve">
+        <value>comienza en menos de 15 minutos</value>
+    </data>
+    <data name="DeleteConfirm" xml:space="preserve">
+        <value>¿Estás seguro de que quieres eliminar</value>
+    </data>
+    <data name="CustomerEntry" xml:space="preserve">
+        <value>entrada de cliente</value>
+    </data>
+    <data name="DeleteConfirmTitle" xml:space="preserve">
+        <value>Confirmar Eliminación</value>
+    </data>
+    <data name="IncorrectLogin" xml:space="preserve">
+        <value>Nombre de usuario o contraseña incorrectos</value>
+    </data>
+    <data name="Error" xml:space="preserve">
+        <value>Error</value>
+    </data>
 </root>

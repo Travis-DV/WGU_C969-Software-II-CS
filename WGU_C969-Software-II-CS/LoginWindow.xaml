@@ -5,16 +5,28 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:local="clr-namespace:WGU_C969_Software_II_CS"
         mc:Ignorable="d"
-        Title="LoginWindow" Height="200" Width="400">
+        Title="LoginWindow" Height="250" Width="500">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="*" />
             <RowDefinition Height="*" />
             <RowDefinition Height="*" />
             <RowDefinition Height="*" />
+            <RowDefinition Height="*" />
         </Grid.RowDefinitions>
-        <Label Grid.Row="0" HorizontalAlignment="Center" FontWeight="Bold" VerticalAlignment="Center">Username=Admin; Password=Admin</Label>
-        <GroupBox Grid.Row="1" Grid.Column="0" Margin="12, 5, 12, 0" Padding="0" BorderThickness="0">
+        <!-- <GroupBox Grid.Row="0"></GroupBox> -->
+        <ComboBox x:Name="LanguagesComboBox" Grid.Row="0" Grid.Column="1" SelectionChanged="LanguageSelectedChanged" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="12, 5">
+            <ComboBoxItem x:Name="LanguagesComboBoxItemEn">English</ComboBoxItem>
+            <ComboBoxItem x:Name="LanguagesComboBoxItemEs">Spanish</ComboBoxItem>
+        </ComboBox>
+        <Label x:Name="CheatLabel" 
+               Grid.Row="1" 
+               HorizontalAlignment="Center" 
+               VerticalAlignment="Center"
+               FontWeight="Bold">
+            Username=Admin; Password=Admin
+        </Label>
+        <GroupBox Grid.Row="2" Grid.Column="0" Margin="12, 5, 12, 0" Padding="0" BorderThickness="0">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"></ColumnDefinition>
@@ -34,7 +46,7 @@
             </Grid>
         </GroupBox>
         
-        <GroupBox Grid.Row="2" Grid.Column="0" Margin="12, 5, 12, 0" Padding="0" BorderThickness="0">
+        <GroupBox Grid.Row="3" Grid.Column="0" Margin="12, 5, 12, 0" Padding="0" BorderThickness="0">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"></ColumnDefinition>
@@ -54,6 +66,6 @@
                 </PasswordBox>
             </Grid>
         </GroupBox>
-        <Button x:Name="DoneButton" Grid.Column="0" Grid.Row="3" HorizontalAlignment="Right" SizeChanged="MyTextBox_SizeChanged" Margin="10" Click="DoneButtonClicked">Done</Button>
+        <Button x:Name="DoneButton" Grid.Column="0" Grid.Row="4" HorizontalAlignment="Right" SizeChanged="MyTextBox_SizeChanged" Margin="10" Click="DoneButtonClicked">Done</Button>
     </Grid>
 </Window>

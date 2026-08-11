@@ -69,4 +69,28 @@
     <data name="PasswordLabel" xml:space="preserve">
         <value>Password</value>
     </data>
+    <data name="AppointmentGeneric" xml:space="preserve">
+        <value>Appointment</value>
+    </data>
+    <data name="PossessiveGeneric" xml:space="preserve">
+        <value>for</value>
+    </data>
+    <data name="StartsIn" xml:space="preserve">
+        <value>starts in less than 15 minutes</value>
+    </data>
+    <data name="DeleteConfirm" xml:space="preserve">
+        <value>Are you sure you want to delete</value>
+    </data>
+    <data name="CustomerEntry" xml:space="preserve">
+        <value>customer entry</value>
+    </data>
+    <data name="DeleteConfirmTitle" xml:space="preserve">
+        <value>Confirm Delete</value>
+    </data>
+    <data name="IncorrectLogin" xml:space="preserve">
+        <value>Incorrect username or password</value>
+    </data>
+    <data name="Error" xml:space="preserve">
+        <value>Error</value>
+    </data>
 </root>

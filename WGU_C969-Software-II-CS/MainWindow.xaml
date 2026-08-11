@@ -20,7 +20,6 @@
     </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="*" />
             <RowDefinition Height="6*" />
             <RowDefinition Height="5*" />
         </Grid.RowDefinitions>
@@ -29,14 +28,8 @@
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
         
-        <!-- <GroupBox Grid.Row="0"></GroupBox> -->
-        <ComboBox x:Name="LanguagesComboBox" Grid.Row="0" Grid.Column="1" SelectionChanged="LanguageSelectedChanged" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="12, 5">
-            <ComboBoxItem x:Name="LanguagesComboBoxItemEn">English</ComboBoxItem>
-            <ComboBoxItem x:Name="LanguagesComboBoxItemEs">Spanish</ComboBoxItem>
-        </ComboBox>
-        
         <!-- CUSTOMER LIST GROUPBOX -->
-        <GroupBox Grid.Row="1" Grid.Column="0" Margin="12, 5, 12, 2.5" Padding="0" BorderThickness="0">
+        <GroupBox Grid.Row="0" Grid.Column="0" Margin="12, 5, 12, 2.5" Padding="0" BorderThickness="0">
             <Grid Margin="0">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="4*"/>
@@ -92,7 +85,7 @@
             </Grid>
         </GroupBox>
         
-        <GroupBox Grid.Row="2" Grid.Column="0" Margin="12, 2.5, 12 5" Padding="0" BorderThickness="0">
+        <GroupBox Grid.Row="1" Grid.Column="0" Margin="12, 2.5, 12 5" Padding="0" BorderThickness="0">
             <Grid Margin="0">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="5*"/>
@@ -112,7 +105,7 @@
         
         
         <!-- APPOINTMENT LIST GROUPBOX -->
-        <GroupBox Grid.Row="1" Grid.Column="1" Grid.RowSpan="2" Margin="12, 5, 12, 2.5" Padding="0" BorderThickness="0">
+        <GroupBox Grid.Row="0" Grid.Column="1" Grid.RowSpan="2" Margin="12, 5, 12, 2.5" Padding="0" BorderThickness="0">
             <Grid Margin="0">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="6*"/>

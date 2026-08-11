@@ -216,8 +216,9 @@ public partial class AddressFrom : INotifyPropertyChanged, IDatabaseInteraction
         }
         
         MessageBoxResult result = MessageBox.Show(
-            $"Are you sure you want to remove {this.Cities[this.CitiesComboBox.SelectedIndex]}",
-            "Confirm Deletion", MessageBoxButton.YesNo);
+            $"{WGU_C969_Software_II_CS.Resources.MainWindow.DeleteConfirm} {this.Cities[this.CitiesComboBox.SelectedIndex]}",
+            WGU_C969_Software_II_CS.Resources.MainWindow.DeleteConfirmTitle, 
+            MessageBoxButton.YesNo);
         if (result == MessageBoxResult.Yes)
         {
             using (MySqlConnection connection = new MySqlConnection(MainWindow.ConnectionBuilder.ConnectionString))

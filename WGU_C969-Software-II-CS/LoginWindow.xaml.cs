@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using System.Globalization;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using MySqlConnector;
@@ -11,13 +12,29 @@ public partial class LoginWindow : Window
 {
     public int ID { get; set; }
     public string Username;
+
+    private void Localize()
+    {
+        this.UsernameLabel.Content = WGU_C969_Software_II_CS.Resources.MainWindow.UsernameLabel;
+        this.PasswordLabel.Content = WGU_C969_Software_II_CS.Resources.MainWindow.PasswordLabel;
+        this.CheatLabel.Content =
+            $"{WGU_C969_Software_II_CS.Resources.MainWindow.UsernameLabel}: Admin; {WGU_C969_Software_II_CS.Resources.MainWindow.PasswordLabel}: Admin";
+    }
     
     public LoginWindow()
     {
         InitializeComponent();
         
-        this.UsernameLabel.Content = WGU_C969_Software_II_CS.Resources.MainWindow.UsernameLabel;
-        this.PasswordLabel.Content = WGU_C969_Software_II_CS.Resources.MainWindow.PasswordLabel;
+        if (CultureInfo.CurrentCulture.Name.Contains("en"))
+        {
+            this.LanguagesComboBoxItemEn.IsSelected = true;
+        }
+        else if (CultureInfo.CurrentCulture.Name.Contains("es"))
+        {
+            this.LanguagesComboBoxItemEs.IsSelected = true; 
+        }
+
+        this.Localize();
     }
     
     private void MyTextBox_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -27,6 +44,26 @@ public partial class LoginWindow : Window
             double newHeight = e.NewSize.Height;
             DoneButton.Width = newHeight * 2;
         }
+    }
+    
+    private void LanguageSelectedChanged(object sender, RoutedEventArgs e)
+    {
+        
+        CultureInfo culture;
+        // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
+        if (this.LanguagesComboBox.SelectedItem.Equals(this.LanguagesComboBoxItemEs))
+        {
+            culture = new CultureInfo("es-ES");
+        } 
+        else
+        {
+            culture = new CultureInfo("en-US");
+        } 
+        
+        Thread.CurrentThread.CurrentCulture = culture;
+        Thread.CurrentThread.CurrentUICulture = culture;
+        
+        this.Localize();
     }
 
     private void DoneButtonClicked(object sender, RoutedEventArgs e)
@@ -85,6 +122,6 @@ public partial class LoginWindow : Window
         }
         
         
-        MessageBox.Show("Incorrect username or password", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+        MessageBox.Show(WGU_C969_Software_II_CS.Resources.MainWindow.IncorrectLogin, WGU_C969_Software_II_CS.Resources.MainWindow.Error, MessageBoxButton.OK, MessageBoxImage.Warning);
     }
 }

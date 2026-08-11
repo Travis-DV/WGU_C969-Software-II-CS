@@ -274,38 +274,6 @@ WHERE (@date IS NULL OR DATE(appointment.start) = @date)
         }
         this.AppointmentListView.ItemsSource = appointments;
     }
-
-    public void Localize()
-    {
-        this.CustomerIDColumn.Header = WGU_C969_Software_II_CS.Resources.MainWindow.ItemIDColumn;
-        this.CustomerFirstNameColumn.Header = WGU_C969_Software_II_CS.Resources.MainWindow.CustomerFirstNameColumn;
-        this.CustomerLastNameColumn.Header = WGU_C969_Software_II_CS.Resources.MainWindow.CustomerLastNameColumn;
-        if (this.CustomerListView.SelectedIndex == -1)
-        {
-            this.CustomerMod = false;
-        }
-        else if (this.CustomerListView.SelectedIndex != -1)
-        {
-            this.CustomerMod = true;
-        }
-        this.CustomerDeleteButton.Content = WGU_C969_Software_II_CS.Resources.MainWindow.CustomerDeleteButton;
-        this.CustomerClearButton.Content = WGU_C969_Software_II_CS.Resources.MainWindow.ClearSelectButton;
-        
-        this.DateClearButton.Content = WGU_C969_Software_II_CS.Resources.MainWindow.ClearSelectButton;
-        
-        this.AppointmentIDColumn.Header = WGU_C969_Software_II_CS.Resources.MainWindow.ItemIDColumn;
-        this.AppointmentStartTimeColumn.Header = WGU_C969_Software_II_CS.Resources.MainWindow.AppointmentStartTimeColumn;
-        this.AppointmentTitleColumn.Header = WGU_C969_Software_II_CS.Resources.MainWindow.AppointmentTitleColumn;
-        if (this.AppointmentListView.SelectedIndex == -1)
-        {
-            this.AppointmentMod = false;
-        }
-        else if (this.AppointmentListView.SelectedIndex != -1)
-        {
-            this.AppointmentMod = true;
-        }
-        this.AppointmentDeleteButton.Content = WGU_C969_Software_II_CS.Resources.MainWindow.AppointmentDeleteButton;
-    }
     
     public MainWindow()
     {
@@ -324,15 +292,6 @@ WHERE (@date IS NULL OR DATE(appointment.start) = @date)
         
         this.DataContext = this;
         InitializeComponent();
-        
-        if (CultureInfo.CurrentCulture.Name.Contains("en"))
-        {
-            this.LanguagesComboBoxItemEn.IsSelected = true;
-        }
-        else if (CultureInfo.CurrentCulture.Name.Contains("es"))
-        {
-            this.LanguagesComboBoxItemEs.IsSelected = true; 
-        }
         
         MainWindow.CheckCreation(this.CurrentUsername);
 
@@ -394,33 +353,23 @@ WHERE appointment.start BETWEEN NOW() and DATE_ADD(NOW(), INTERVAL 15 MINUTE);",
                     string appointmentTitle = reader.GetString("title");
                     string customerName = reader.GetString("customerName");
                     DateTime appointmentStartTime = reader.GetDateTime("start");
-                    MessageBox.Show($"Appointment {appointmentTitle} for {customerName} starts in less than 15 minutes! ({appointmentStartTime.TimeOfDay})");
+                    MessageBox.Show($"{WGU_C969_Software_II_CS.Resources.MainWindow.AppointmentGeneric} {appointmentTitle} {WGU_C969_Software_II_CS.Resources.MainWindow.PossessiveGeneric} {customerName} {WGU_C969_Software_II_CS.Resources.MainWindow.StartsIn}! ({appointmentStartTime.TimeOfDay})");
                 }
             }
         }
         
-        this.Localize();
-    }
-    
-    
-    private void LanguageSelectedChanged(object sender, RoutedEventArgs e)
-    {
+        this.CustomerIDColumn.Header = WGU_C969_Software_II_CS.Resources.MainWindow.ItemIDColumn;
+        this.CustomerFirstNameColumn.Header = WGU_C969_Software_II_CS.Resources.MainWindow.CustomerFirstNameColumn;
+        this.CustomerLastNameColumn.Header = WGU_C969_Software_II_CS.Resources.MainWindow.CustomerLastNameColumn;
+        this.CustomerDeleteButton.Content = WGU_C969_Software_II_CS.Resources.MainWindow.CustomerDeleteButton;
+        this.CustomerClearButton.Content = WGU_C969_Software_II_CS.Resources.MainWindow.ClearSelectButton;
         
-        CultureInfo culture;
-        // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
-        if (this.LanguagesComboBox.SelectedItem.Equals(this.LanguagesComboBoxItemEs))
-        {
-            culture = new CultureInfo("es-ES");
-        } 
-        else
-        {
-            culture = new CultureInfo("en-US");
-        } 
+        this.DateClearButton.Content = WGU_C969_Software_II_CS.Resources.MainWindow.ClearSelectButton;
         
-        Thread.CurrentThread.CurrentCulture = culture;
-        Thread.CurrentThread.CurrentUICulture = culture;
-        
-        this.Localize();
+        this.AppointmentIDColumn.Header = WGU_C969_Software_II_CS.Resources.MainWindow.ItemIDColumn;
+        this.AppointmentStartTimeColumn.Header = WGU_C969_Software_II_CS.Resources.MainWindow.AppointmentStartTimeColumn;
+        this.AppointmentTitleColumn.Header = WGU_C969_Software_II_CS.Resources.MainWindow.AppointmentTitleColumn;
+        this.AppointmentDeleteButton.Content = WGU_C969_Software_II_CS.Resources.MainWindow.AppointmentDeleteButton;
     }
     
     private void CustomerModButtonClicked(object sender, RoutedEventArgs e)
@@ -471,8 +420,8 @@ WHERE appointment.start BETWEEN NOW() and DATE_ADD(NOW(), INTERVAL 15 MINUTE);",
         {
             
             MessageBoxResult result = MessageBox.Show(
-                $"Are you sure you want to delete {selectedItem.FirstName} {selectedItem.LastName} (ID: {selectedItem.ID}) customer entry?",
-                "Confirm Delete",
+                $"{WGU_C969_Software_II_CS.Resources.MainWindow.DeleteConfirm} {selectedItem.FirstName} {selectedItem.LastName} (ID: {selectedItem.ID}) {WGU_C969_Software_II_CS.Resources.MainWindow.CustomerEntry}?",
+                WGU_C969_Software_II_CS.Resources.MainWindow.DeleteConfirm,
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Warning);
 
@@ -580,8 +529,8 @@ WHERE appointment.start BETWEEN NOW() and DATE_ADD(NOW(), INTERVAL 15 MINUTE);",
             }
             
             MessageBoxResult result = MessageBox.Show(
-                $"Are you sure you want to delete {selectedItem.Title} for {customerName} (ID: {selectedItem.ID}) customer entry?",
-                "Confirm Delete",
+                $"{WGU_C969_Software_II_CS.Resources.MainWindow.DeleteConfirm} {selectedItem.Title} {WGU_C969_Software_II_CS.Resources.MainWindow.PossessiveGeneric} {customerName} (ID: {selectedItem.ID}) {WGU_C969_Software_II_CS.Resources.MainWindow.CustomerEntry}?",
+                WGU_C969_Software_II_CS.Resources.MainWindow.DeleteConfirmTitle,
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Warning);
 

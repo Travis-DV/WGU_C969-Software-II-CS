@@ -78,6 +78,15 @@ namespace WGU_C969_Software_II_CS.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Appointment.
+        /// </summary>
+        internal static string AppointmentGeneric {
+            get {
+                return ResourceManager.GetString("AppointmentGeneric", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Modify Appointment.
         /// </summary>
         internal static string AppointmentModifyButton {
@@ -132,6 +141,15 @@ namespace WGU_C969_Software_II_CS.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to customer entry.
+        /// </summary>
+        internal static string CustomerEntry {
+            get {
+                return ResourceManager.GetString("CustomerEntry", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to First Name.
         /// </summary>
         internal static string CustomerFirstNameColumn {
@@ -177,11 +195,47 @@ namespace WGU_C969_Software_II_CS.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Are you sure you want to delete.
+        /// </summary>
+        internal static string DeleteConfirm {
+            get {
+                return ResourceManager.GetString("DeleteConfirm", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Confirm Delete.
+        /// </summary>
+        internal static string DeleteConfirmTitle {
+            get {
+                return ResourceManager.GetString("DeleteConfirmTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Description.
         /// </summary>
         internal static string DescriptionDetail {
             get {
                 return ResourceManager.GetString("DescriptionDetail", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Error.
+        /// </summary>
+        internal static string Error {
+            get {
+                return ResourceManager.GetString("Error", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Incorrect username or password.
+        /// </summary>
+        internal static string IncorrectLogin {
+            get {
+                return ResourceManager.GetString("IncorrectLogin", resourceCulture);
             }
         }
         
@@ -200,6 +254,24 @@ namespace WGU_C969_Software_II_CS.Resources {
         internal static string PasswordLabel {
             get {
                 return ResourceManager.GetString("PasswordLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to for.
+        /// </summary>
+        internal static string PossessiveGeneric {
+            get {
+                return ResourceManager.GetString("PossessiveGeneric", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to starts in less than 15 minutes.
+        /// </summary>
+        internal static string StartsIn {
+            get {
+                return ResourceManager.GetString("StartsIn", resourceCulture);
             }
         }
         
