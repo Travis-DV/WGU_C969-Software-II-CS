@@ -16,8 +16,8 @@ public class AdvancedList<T>(App.UpdateComboBox comboBoxUpdater) : List<T>
         this.ComboBoxUpdater();
     }
     
-    public static implicit operator List<string>(AdvancedList<T> list)
+    /*public static implicit operator List<string>(AdvancedList<T> list)
     {
         return list.Select(item => item?.ToString() ?? "").ToList();
-    }
+    }*/
 }

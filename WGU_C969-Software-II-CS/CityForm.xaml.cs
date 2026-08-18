@@ -116,7 +116,7 @@ public partial class CityForm : INotifyPropertyChanged, IDatabaseInteraction
     {
         // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
         if (this.Countries == null) { return; }
-        this.CountriesComboBox.ItemsSource = (List<string>)this.Countries;
+        this.CountriesComboBox.ItemsSource = this.Countries;
     }
     
     private void DoneButtonClicked(object sender, RoutedEventArgs e)

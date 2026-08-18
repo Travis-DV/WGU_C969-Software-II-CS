@@ -265,7 +265,7 @@ WHERE (@date IS NULL OR DATE(appointment.start) = @date)
                         ID = int.Parse(reader["appointmentId"].ToString()),
                         CustomerId =  int.Parse(reader["customerId"].ToString()),
                         UserId = int.Parse(reader["userId"].ToString()),
-                        StartTime = start.TimeOfDay,
+                        StartTime = start.ToLocalTime().TimeOfDay,
                         AppointmentTitle = reader["title"].ToString(),
                         Detail = detail
                     });
@@ -277,7 +277,7 @@ WHERE (@date IS NULL OR DATE(appointment.start) = @date)
     
     public MainWindow()
     {
-        if (this.ID == -1)
+        /*if (this.ID == -1)
         {
             LoginWindow loginWindow = new LoginWindow();
             loginWindow.ShowDialog();
@@ -288,7 +288,10 @@ WHERE (@date IS NULL OR DATE(appointment.start) = @date)
             }
             this.ID = loginWindow.ID;
             this.CurrentUsername = loginWindow.Username;
-        }
+        }*/
+
+        this.ID = 0;
+        this.CurrentUsername = "Admin"; //TODO UNCOMMENT
         
         this.DataContext = this;
         InitializeComponent();
@@ -411,7 +414,7 @@ WHERE appointment.start BETWEEN NOW() and DATE_ADD(NOW(), INTERVAL 15 MINUTE);",
                 }
             }
         }
-        //this.LoadCustomerNames();
+        LoadCustomerDisplay();
     }
     
     private void CustomerDeleteButtonClicked(object sender, RoutedEventArgs e)
@@ -435,6 +438,8 @@ WHERE appointment.start BETWEEN NOW() and DATE_ADD(NOW(), INTERVAL 15 MINUTE);",
                 this.Customers.Remove(selectedItem);
             }
         }
+
+        LoadCustomerDisplay();
     }
     
     private void CustomerClearButtonClicked(object sender, RoutedEventArgs e)
@@ -475,11 +480,11 @@ WHERE appointment.start BETWEEN NOW() and DATE_ADD(NOW(), INTERVAL 15 MINUTE);",
             connection.Open();
             using MySqlCommand command = new MySqlCommand("SELECT IFNULL(MAX(appointmentId), 0) + 1 FROM appointment;", connection);
             
-            AppointmentForm newCustomer = new AppointmentForm(int.Parse(command.ExecuteScalar().ToString()), this.CurrentUsername, this.SelectedCustomerId, this.ID)
+            AppointmentForm newAppointment = new AppointmentForm(int.Parse(command.ExecuteScalar().ToString()), this.CurrentUsername, this.SelectedCustomerId, this.ID)
             {
                 Owner = this
             };
-            newCustomer.ShowDialog();
+            newAppointment.ShowDialog();
         }
         
         List<AppointmentForm> moddedAppointments = new List<AppointmentForm>();
@@ -506,6 +511,7 @@ WHERE appointment.start BETWEEN NOW() and DATE_ADD(NOW(), INTERVAL 15 MINUTE);",
                 }
             }
         }
+        this.LoadAppointmentDisplay();
     }
     
     private void AppointmentDeleteButtonClicked(object sender, RoutedEventArgs e)
@@ -544,6 +550,7 @@ WHERE appointment.start BETWEEN NOW() and DATE_ADD(NOW(), INTERVAL 15 MINUTE);",
                 this.Appointments.Remove(selectedItem);
             }
         }
+        this.LoadAppointmentDisplay();
     }
     
     private void ListView_SizeChanged(object sender, SizeChangedEventArgs e)

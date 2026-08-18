@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using System.DirectoryServices.ActiveDirectory;
 using System.Runtime.InteropServices.Marshalling;
 using System.Windows;
 using System.Windows.Controls;
@@ -15,6 +16,192 @@ public partial class AppointmentForm : INotifyPropertyChanged, IDatabaseInteract
     private string CurrentUsername { get; init; }
     public int CustomerId { get; init; }
     public int UserId { get; init; }
+    
+    private List<DateTime> AllTimes
+    {
+        get
+        {
+            List<DateTime> output = new List<DateTime>();
+            for (TimeSpan t = new TimeSpan(14, 0, 0); t < new TimeSpan(22, 0, 0); t += TimeSpan.FromMinutes(30))
+            {
+                output.Add(DateTime.SpecifyKind(DateTime.UtcNow.Date.Add(t), DateTimeKind.Utc));
+            }
+
+            return output;
+        }
+    } 
+    
+    private List<(DateTime start, DateTime end)> BookedRanges
+    {
+        get
+        {
+            using MySqlConnection connection = new MySqlConnection(MainWindow.ConnectionBuilder.ConnectionString);
+            connection.Open();
+            using MySqlCommand command = new MySqlCommand(
+                @"SELECT start, end
+                  FROM appointment
+                  WHERE DATE(start) = @date
+                    AND appointmentId != @appointmentId",
+                connection
+            );
+            command.Parameters.AddWithValue("@date", DateOnly.FromDateTime((DateTime)this.SelectedDate));
+            command.Parameters.AddWithValue("@appointmentId", this.ID);
+            using MySqlDataReader reader = command.ExecuteReader();
+            
+            List<(DateTime start, DateTime end)> output = new List<(DateTime start, DateTime end)>();
+            while (reader.Read())
+            {
+                DateTime temp_001 = reader.GetDateTime("start");
+                DateTime start = DateTime.SpecifyKind(reader.GetDateTime("start"),  DateTimeKind.Utc);
+                start = start.AddSeconds(-start.Second);
+                DateTime end = DateTime.SpecifyKind(reader.GetDateTime("end"),  DateTimeKind.Utc);
+                end = end.AddSeconds(-end.Second);
+                Console.WriteLine($"start: {start}, end: {end}");
+                output.Add((
+                    start, end
+                ));
+            }
+
+            return output;
+        }
+    }
+
+    private List<DateTime> AvailableStartTimes
+    {
+        get
+        {
+            List<(DateTime start, DateTime end)> bookedRanges = this.BookedRanges;
+            List<DateTime> output = this.AllTimes;
+            
+
+            foreach ((DateTime start, DateTime end) bookedTime in bookedRanges)
+            {
+                List<DateTime> temp = new List<DateTime>();
+                for (int i = 0; i < output.Count; i++)
+                {
+                    if (output[i].TimeOfDay >= bookedTime.start.TimeOfDay && output[i].TimeOfDay <= bookedTime.end.TimeOfDay)
+                    {
+                        temp.Add(output[i]);
+                    }
+
+                    else if (output[i].TimeOfDay > bookedTime.end.TimeOfDay)
+                    {
+                        i = output.Count;
+                    }
+                }
+
+                output = output.Except(temp).ToList();
+            }
+
+            return output;
+        }
+    }
+
+    private List<string> AvailableStartTimesLocal
+    {
+        get
+        {
+            List<string> output = new List<string>();
+            
+            TimeZoneInfo localZone = TimeZoneInfo.Local;
+            string zoneName = localZone.IsDaylightSavingTime(DateTime.Now) 
+                ? localZone.DaylightName 
+                : localZone.StandardName;
+            
+            string abbreviation = new string(zoneName
+                .Split(' ')
+                .Where(word => word.Length > 0 && char.IsUpper(word[0]))
+                .Select(word => word[0])
+                .ToArray());
+
+            foreach (DateTime startTime in this.AvailableStartTimes)
+            {
+                DateTime localStartTime = startTime.ToLocalTime();
+                
+                output.Add($"{localStartTime.ToString(@"hh\:mm tt")} ({abbreviation})");
+            }
+            
+            return output;
+        }
+    }
+
+    private List<DateTime> AvailableEndTimes
+    {
+        get
+        {
+            if (this.SelectedStartTime == null || this.SelectedStartTime == "" || this.SelectedStartTime == "Pick today or any future date!")
+            {
+                return new List<DateTime>();
+            }
+            
+            List<DateTime> output = this.AllTimes;
+            List<DateTime> temp = new List<DateTime>();
+    
+            DateTime selectedUtcStartTime = AvailableStartTimes[this.SelectStartTimeComboBox.SelectedIndex];
+            foreach (DateTime time in output)
+            {
+                if (time.TimeOfDay <= selectedUtcStartTime.TimeOfDay)
+                {
+                    temp.Add(time);
+                }
+                else if (time.TimeOfDay > selectedUtcStartTime.TimeOfDay)
+                {
+                    break;
+                }
+            }
+            output = output.Except(temp).ToList();
+            
+
+            List<(DateTime start, DateTime end)> bookedRanges = this.BookedRanges;
+            foreach ((DateTime start, DateTime end) bookedTime in bookedRanges)
+            {
+                temp = new List<DateTime>();
+                for (int i = 0; i < output.Count; i++)
+                {
+                    if (!(output[i].TimeOfDay >= bookedTime.start.TimeOfDay && output[i].TimeOfDay <= bookedTime.end.TimeOfDay))
+                    {
+                        temp.Add(output[i]);
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+
+                output = temp;
+            }
+
+            return output;
+        }
+    }
+    
+    private List<String> AvailableEndTimesLocal
+    {
+        get
+        {
+            List<string> output = new List<string>();
+            
+            TimeZoneInfo localZone = TimeZoneInfo.Local;
+            string zoneName = localZone.IsDaylightSavingTime(DateTime.Now) 
+                ? localZone.DaylightName 
+                : localZone.StandardName;
+            
+            string abbreviation = new string(zoneName
+                .Split(' ')
+                .Where(word => word.Length > 0 && char.IsUpper(word[0]))
+                .Select(word => word[0])
+                .ToArray());
+
+            foreach (DateTime endTime in this.AvailableEndTimes)
+            {
+                DateTime localEndTime = endTime.ToLocalTime();
+                
+                output.Add($"{localEndTime.ToString(@"hh\:mm tt")} ({abbreviation})");
+            }
+            
+            return output;
+        }
+    }
     
     private string _appointmentTitle = "";
     public string AppointmentTitle
@@ -75,7 +262,7 @@ public partial class AppointmentForm : INotifyPropertyChanged, IDatabaseInteract
         {
             _selectedType = value;
             OnPropertyChanged(nameof(SelectedType));
-            Console.WriteLine($"Selected Location Change: {value}");
+            Console.WriteLine($"Selected Type Change: {value}");
         } 
     }
     
@@ -97,8 +284,8 @@ public partial class AppointmentForm : INotifyPropertyChanged, IDatabaseInteract
         get => _selectedDate;
         set
         {
-            _selectedDate = value;
             OnPropertyChanged(nameof(SelectedDate));
+            _selectedDate = value;
             Console.WriteLine($"Selected Date Change: {value}");
         }
     }
@@ -111,13 +298,16 @@ public partial class AppointmentForm : INotifyPropertyChanged, IDatabaseInteract
             _selectedStartTime = value;
             OnPropertyChanged(nameof(SelectedStartTime));
             Console.WriteLine($"Selected Start Time Change: {value}");
+            
             if (value == "")
             {
                 //this.SelectedEndTime = "";
                 this.SelectEndTimeComboBox.SelectedIndex = -1;
                 return;
             }
-            this.SelectEndTimeComboBox.ItemsSource = this.AvailableEndTimes.Select(t => t.ToString(@"hh\:mm")).ToList();
+            
+            this.SelectEndTimeComboBox.ItemsSource =
+                this.AvailableEndTimesLocal;
         } 
     }
     private string _selectedEndTime = "";
@@ -131,81 +321,8 @@ public partial class AppointmentForm : INotifyPropertyChanged, IDatabaseInteract
             Console.WriteLine($"Selected End Time Change: {value}");
         } 
     }
-    private DateTime[] AppointmentTime { get; set; } = new  DateTime[2];
-
-    private List<TimeSpan> AllTimes
-    {
-        get
-        {
-            List<TimeSpan> output = new List<TimeSpan>();
-            for (var t = new TimeSpan(9, 0, 0); t < new TimeSpan(17, 0, 0); t += TimeSpan.FromMinutes(30))
-            {
-                output.Add(t);
-            }
-
-            return output;
-        }
-    } 
+    private DateTime[] AppointmentTime { get; set; } = new DateTime[2];
     
-    private List<(TimeSpan start, TimeSpan end)> BookedRanges
-    {
-        get
-        {
-            using MySqlConnection connection = new MySqlConnection(MainWindow.ConnectionBuilder.ConnectionString);
-            connection.Open();
-            using MySqlCommand command = new MySqlCommand(
-                @"SELECT TIME(start) as startTime, TIME(end) as endTime
-                  FROM appointment
-                  WHERE DATE(start) = @date",
-                connection
-            );
-            command.Parameters.AddWithValue("@date", SelectDateCalendar.SelectedDate);
-            using var reader = command.ExecuteReader();
-            
-            List<(TimeSpan start, TimeSpan end)> output = new List<(TimeSpan start, TimeSpan end)>();
-            while (reader.Read())
-            {
-                TimeSpan start = (TimeSpan)reader["startTime"];
-                TimeSpan end = (TimeSpan)reader["endTime"];
-                Console.WriteLine($"start: {start.ToString()}, end: {end.ToString()}");
-                output.Add((
-                    new TimeSpan(start.Hours, start.Minutes, 0), 
-                    new TimeSpan(end.Hours, end.Minutes, 0)
-                ));
-            }
-
-            return output;
-        }
-    }
-
-    private List<TimeSpan> AvailableStartTimes
-    {
-        get
-        {
-            return this.AllTimes
-                .Where(slot => !this.BookedRanges.Any(r => slot >= r.start && slot <= r.end))
-                .ToList();
-        }
-    }
-
-    private List<TimeSpan> AvailableEndTimes
-    {
-        get
-        {
-            if (this.SelectedStartTime == null || this.SelectedStartTime == "" || this.SelectedStartTime == "Pick today or a future date!")
-            {
-                return new List<TimeSpan>();;
-            }
-
-
-            return this.AllTimes
-                .Where(t => t > TimeSpan.Parse(this.SelectedStartTime))
-                .TakeWhile(timeSpan => !this.BookedRanges.Any(r => timeSpan >= r.start && timeSpan <= r.end))
-                .ToList();
-        }
-    }
-
-
     private void ReadTypesAndLocations()
     {
         this.Types = new List<string>();
@@ -214,16 +331,18 @@ public partial class AppointmentForm : INotifyPropertyChanged, IDatabaseInteract
         using MySqlConnection connection = new MySqlConnection(MainWindow.ConnectionBuilder.ConnectionString);
         connection.Open();
         using MySqlCommand command = new MySqlCommand($"SELECT * FROM appointment", connection);
-        using var reader = command.ExecuteReader();
+        using MySqlDataReader reader = command.ExecuteReader();
         while (reader.Read())
         {
-            if (!this.Types.Contains(reader["type"].ToString()))
+            string newType = reader.GetString("type");
+            if (!this.Types.Contains(newType))
             {
-                this.Types.Add(reader["type"].ToString());
+                this.Types.Add(newType);
             }
-            if (!this.Locations.Contains(reader["type"].ToString()))
+            string newLocation = reader.GetString("location");
+            if (!this.Locations.Contains(newLocation))
             {
-                this.Locations.Add(reader["location"].ToString());
+                this.Locations.Add(newLocation);
             }
         }
     }
@@ -241,11 +360,11 @@ public partial class AppointmentForm : INotifyPropertyChanged, IDatabaseInteract
             connection
         );
         command.Parameters.AddWithValue("@customerId", this.CustomerId);
-        using var reader = command.ExecuteReader();
+        using MySqlDataReader reader = command.ExecuteReader();
         while (reader.Read())
         {
             PhoneClass phone = new PhoneClass();
-            phone = reader["phone"].ToString();
+            phone = reader.GetString("phone");
             this.Contact = $"{reader["customerName"].ToString()} ({phone.ToString()}). {reader["address"].ToString()}, {reader["city"]}";
         }
     }
@@ -273,20 +392,20 @@ public partial class AppointmentForm : INotifyPropertyChanged, IDatabaseInteract
         connection.Open();
         using MySqlCommand command = new MySqlCommand($"SELECT * FROM appointment WHERE appointmentId = @id", connection);
         command.Parameters.AddWithValue("@id", this.ID);
-        using (var reader = command.ExecuteReader())
+        using (MySqlDataReader reader = command.ExecuteReader())
         {
             if (reader.Read())
             {
-                this.AppointmentTitle = reader["title"].ToString() ?? "";
-                this.Description = reader["description"].ToString() ?? "";
-                this.LocationComboBox.SelectedItem = reader["location"].ToString();
-                this.TypeComboBox.SelectedItem = reader["type"].ToString();
-                this.url = reader["url"].ToString();
-                DateTime start = DateTime.Parse(reader["start"].ToString());
+                this.AppointmentTitle = reader.GetString("title");
+                this.Description = reader.GetString("description");
+                this.LocationComboBox.SelectedItem = reader.GetString("location");
+                this.TypeComboBox.SelectedItem = reader.GetString("type");
+                this.url = reader.GetString("url");
+                DateTime start = DateTime.SpecifyKind(reader.GetDateTime("start"), DateTimeKind.Utc);
                 this.SelectDateCalendar.SelectedDate = start;
-                this.SelectStartTimeComboBox.SelectedItem = start.TimeOfDay.ToString();
-                DateTime end = DateTime.Parse(reader["end"].ToString());
-                this.SelectEndTimeComboBox.SelectedItem = start.TimeOfDay.ToString();
+                this.SelectStartTimeComboBox.SelectedIndex = AvailableStartTimes.FindIndex(time => time.TimeOfDay == start.TimeOfDay);
+                DateTime end = DateTime.SpecifyKind(reader.GetDateTime("end"), DateTimeKind.Utc);
+                this.SelectEndTimeComboBox.SelectedIndex = AvailableEndTimes.FindIndex(time => time.TimeOfDay == end.TimeOfDay);
             }
         }
         
@@ -405,10 +524,15 @@ public partial class AppointmentForm : INotifyPropertyChanged, IDatabaseInteract
         this.SelectedType = this.TypeComboBox.SelectedItem.ToString();
         this.url = this.URLTextBox.Text;
         
+        DateTime selectedUtcStartTime = AvailableStartTimes[this.SelectStartTimeComboBox.SelectedIndex];
+        DateTime selectedUtcEndTime = AvailableEndTimes[this.SelectEndTimeComboBox.SelectedIndex];
+
         this.AppointmentTime[0] =
-            this.SelectDateCalendar.SelectedDate.Value.Date.Add(TimeSpan.Parse(SelectedStartTime));
+            this.SelectDateCalendar.SelectedDate.Value.Date.Add(selectedUtcStartTime.TimeOfDay);
         this.AppointmentTime[1] =
-            this.SelectDateCalendar.SelectedDate.Value.Date.Add(TimeSpan.Parse(SelectedEndTime));
+            this.SelectDateCalendar.SelectedDate.Value.Date.Add(selectedUtcEndTime.TimeOfDay);
+        
+        MessageBox.Show($"offset {TimeZoneInfo.Local.GetUtcOffset(AppointmentTime[0])} Selected {SelectedStartTime} Saved {AppointmentTime[0].TimeOfDay}, timezone local {TimeZoneInfo.Local} DateTimeKindLocal {DateTimeKind.Local} AvailableStartTimeIndex {selectedUtcStartTime} AvailableStartTimeLOCALIndex {AvailableStartTimesLocal[this.SelectStartTimeComboBox.SelectedIndex]}");
         
         this.DataBaseUpdater();
         this.DialogResult = true;
@@ -423,30 +547,7 @@ public partial class AppointmentForm : INotifyPropertyChanged, IDatabaseInteract
             DoneButton.Width = newHeight * 2;
         }
     }
-
-    private void SelectedDateChanged(object sender, SelectionChangedEventArgs e)
-    {
-        BindingExpression? dateCalandarBinding = SelectDateCalendar.GetBindingExpression(Calendar.SelectedDateProperty);
-        if (dateCalandarBinding != null)
-        {
-            if (this.SelectDateCalendar.SelectedDate < DateTime.Now.Date)
-            {
-                Validation.MarkInvalid(dateCalandarBinding,
-                    new ValidationError(new ExceptionValidationRule(), dateCalandarBinding));
-                this.SelectStartTimeComboBox.ItemsSource = new List<string>() {"Pick today or a future date!"};
-                this.SelectStartTimeComboBox.SelectedIndex = 0;
-                return;
-            }
-            Validation.ClearInvalid(dateCalandarBinding);
-        }
-        else
-        {
-            throw new Exception("Failed to bind SelectDateCalendar");
-        }
-        this.SelectStartTimeComboBox.ItemsSource = this.AvailableStartTimes.Select(t => t.ToString(@"hh\:mm")).ToList();
-        this.SelectEndTimeComboBox.ItemsSource = this.AvailableEndTimes.Select(t => t.ToString(@"hh\:mm")).ToList();
-    }
-
+    
     private void DataBaseUpdater()
     {
         using MySqlConnection connection = new MySqlConnection(MainWindow.ConnectionBuilder.ConnectionString);
@@ -481,9 +582,9 @@ public partial class AppointmentForm : INotifyPropertyChanged, IDatabaseInteract
         command.Parameters.AddWithValue("@url", this.url);
         command.Parameters.AddWithValue("@start", this.AppointmentTime[0]);
         command.Parameters.AddWithValue("@end", this.AppointmentTime[1]);
-        command.Parameters.AddWithValue("@createDate", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+        command.Parameters.AddWithValue("@createDate", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
         command.Parameters.AddWithValue("@createdBy", this.CurrentUsername);
-        command.Parameters.AddWithValue("@lastUpdate", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+        command.Parameters.AddWithValue("@lastUpdate", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
         command.Parameters.AddWithValue("@lastUpdateBy", this.CurrentUsername);
 
         command.ExecuteNonQuery();
@@ -494,6 +595,36 @@ public partial class AppointmentForm : INotifyPropertyChanged, IDatabaseInteract
     protected void OnPropertyChanged(string name)
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+    }
+
+    private void SelectedDateChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        BindingExpression? dateCalandarBinding = SelectDateCalendar.GetBindingExpression(Calendar.SelectedDateProperty);
+        if (dateCalandarBinding != null)
+        {
+            if (this.SelectedDate < DateTime.Now.Date)
+            {
+                Validation.MarkInvalid(dateCalandarBinding,
+                    new ValidationError(new ExceptionValidationRule(), dateCalandarBinding));
+                this.SelectStartTimeComboBox.ItemsSource = new List<string>() {"Pick today or a future date!"};
+                this.SelectStartTimeComboBox.SelectedIndex = 0;
+                this.SelectEndTimeComboBox.ItemsSource = new List<string>();
+                //this.SelectEndTimeComboBox.SelectedIndex = -1;
+                return;
+            }
+            Validation.ClearInvalid(dateCalandarBinding);
+                
+                
+        }
+        else
+        {
+            throw new Exception("Failed to bind SelectDateCalendar");
+        }
+
+        this.SelectStartTimeComboBox.ItemsSource = 
+            this.AvailableStartTimesLocal;
+        this.SelectEndTimeComboBox.ItemsSource =
+            this.AvailableEndTimesLocal;
     }
 }
 

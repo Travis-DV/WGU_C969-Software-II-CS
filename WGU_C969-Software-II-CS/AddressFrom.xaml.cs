@@ -157,7 +157,7 @@ public partial class AddressFrom : INotifyPropertyChanged, IDatabaseInteraction
     {
         // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
         if (this.Cities == null) { return; }
-        this.CitiesComboBox.ItemsSource = (List<string>)this.Cities;
+        this.CitiesComboBox.ItemsSource = this.Cities;
     }
 
     private void CityPushButtonClicked(int id)
