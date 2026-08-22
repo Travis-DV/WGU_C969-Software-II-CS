@@ -59,7 +59,7 @@
                   HorizontalAlignment="Left" VerticalAlignment="Center" 
                   Margin="12,10" Width="200"
                   Style="{StaticResource ControlInError}"
-                  SelectedIndex="{Binding SelectedCountryIndex}">
+                  SelectedItem="{Binding SelectedCountry}">
         </ComboBox>
         <Button Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="2" x:Name="DoneButton" Margin="250, 25"
                 Click="DoneButtonClicked">DoneButton</Button>

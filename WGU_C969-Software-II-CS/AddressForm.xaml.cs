@@ -8,7 +8,7 @@ using System.Windows.Data;
 
 namespace WGU_C969_Software_II_CS;
 
-public partial class AddressFrom : INotifyPropertyChanged, IDatabaseInteraction
+public partial class AddressForm : INotifyPropertyChanged, IDatabaseInteraction
 {
     // ReSharper disable once InconsistentNaming
     public int ID { get; init; }
@@ -21,55 +21,26 @@ public partial class AddressFrom : INotifyPropertyChanged, IDatabaseInteraction
         set
         {
             _addressOne = value;
+            Console.WriteLine($"AddressOne Changed {value}");
             OnPropertyChanged(nameof(AddressOne));
         }
     }
     
-    private string _addressTwo = "";
-    public string AddressTwo
-    {
-        get => _addressTwo;
-        set
-        {
-            _addressTwo = value;
-            OnPropertyChanged(nameof(AddressTwo));
-        }
-    }
+    private string AddressTwo = "";
     
     // ReSharper disable once InconsistentNaming
-    private int SelectedCityId = -1;
-    public int SelectedCityIndex
+    private CityForm _selectedCity;
+    public CityForm SelectedCity
     {
-        get
-        {
-            // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
-            if (this.Cities == null)
-            {
-                return -1;
-            }
-            return this.Cities.FindIndex(c => c.ID == SelectedCityId);
-        }
+        get => _selectedCity;
         set
         {
-            int i = value;
-            if (value > this.Cities.Count)
-            {
-                Console.WriteLine("Value greater than Customers");
-                return;
-            }
-
-            if (value == -1)
-            {
-                SelectedCityId = -1;
-            }
-            else if (value != -1)
-            {
-                SelectedCityId = this.Cities[value].ID;
-            }
-            Console.WriteLine($"SelectedCityIndex Changed {value}");
-            OnPropertyChanged(nameof(SelectedCityIndex));
+            _selectedCity = value;
+            Console.WriteLine($"SelectedCity Changed {value}");
+            OnPropertyChanged(nameof(SelectedCity));
         }
     }
+    private List<CityForm> Cities { get; set; }
     
     private string _postalCode = "";
     public string PostalCode
@@ -78,6 +49,7 @@ public partial class AddressFrom : INotifyPropertyChanged, IDatabaseInteraction
         set
         {
             _postalCode = value;
+            Console.WriteLine($"PostalCode Changed {value}");
             OnPropertyChanged(nameof(PostalCode));
         }
     }
@@ -89,20 +61,19 @@ public partial class AddressFrom : INotifyPropertyChanged, IDatabaseInteraction
         set
         {
             HomePhone.Validate(value.ToString(), CultureInfo.CurrentCulture);
-            OnPropertyChanged(nameof(PhoneNumberString));
             Console.WriteLine($"Phone Number String Change: {value}");
+            OnPropertyChanged(nameof(PhoneNumberString));
         }
     }
-    private AdvancedList<CityForm> Cities { get; set; }
     
-    public AddressFrom(int addressId, string currentUsername)
+    public AddressForm(int addressId, string currentUsername)
     {
         this.DataContext = this;
         InitializeComponent();
         
         this.ID = addressId;
         this.CurrentUsername = currentUsername;
-        this.Cities = new AdvancedList<CityForm>(this.RenderCitiesComboBox);
+        this.Cities = new List<CityForm>();
         this.ReadCities();
 
         using (MySqlConnection connection = new MySqlConnection(MainWindow.ConnectionBuilder.ConnectionString))
@@ -115,12 +86,12 @@ public partial class AddressFrom : INotifyPropertyChanged, IDatabaseInteraction
                 {
                     if (reader.Read())
                     {
-                        this.AddressOne = reader["address"].ToString() ?? "";
-                        this.AddressTwo = reader["address2"].ToString() ?? "";
-                        this.SelectedCityId = int.Parse(reader["cityId"].ToString() ?? "-1");
-                        OnPropertyChanged(nameof(SelectedCityIndex));
-                        this.PostalCode = reader["postalCode"].ToString() ?? "";
-                        this.HomePhone.Validate(reader["phone"].ToString() ?? "", CultureInfo.CurrentCulture);
+                        this.AddressOne = reader.GetString("address");
+                        this.AddressTwo = reader.GetString("address2");
+                        this.AddressTwoTextBox.Text = this.AddressTwo;
+                        this.SelectedCity = this.Cities.Find(i => i.ID == reader.GetInt16("cityId"));
+                        this.PostalCode = reader.GetString("postalCode");
+                        this.HomePhone.Validate(reader.GetString("phone"), CultureInfo.CurrentCulture);
                         OnPropertyChanged(nameof(PhoneNumberString));
                     }
                 }
@@ -141,7 +112,7 @@ public partial class AddressFrom : INotifyPropertyChanged, IDatabaseInteraction
 
     private void ReadCities()
     {
-        this.Cities = new AdvancedList<CityForm>(this.RenderCitiesComboBox);
+        this.Cities = new List<CityForm>();
         
         using MySqlConnection connection = new MySqlConnection(MainWindow.ConnectionBuilder.ConnectionString);
         connection.Open();
@@ -149,23 +120,15 @@ public partial class AddressFrom : INotifyPropertyChanged, IDatabaseInteraction
         using var reader = command.ExecuteReader();
         while (reader.Read())
         {
-            this.Cities.Add(new CityForm(int.Parse(reader["cityId"].ToString() ?? ""), this.CurrentUsername));
+            this.Cities.Add(new CityForm(reader.GetInt16("cityId"), this.CurrentUsername));
         }
-    }
-    
-    private void RenderCitiesComboBox()
-    {
-        // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
-        if (this.Cities == null) { return; }
+        
         this.CitiesComboBox.ItemsSource = this.Cities;
     }
 
     private void CityPushButtonClicked(int id)
     {
-        CityForm newCity = new CityForm(id, this.CurrentUsername)
-        {
-            Owner = this
-        };
+        CityForm newCity = new CityForm(id, this.CurrentUsername);
         newCity.ShowDialog();
         this.ReadCities();
         this.CitiesComboBox.SelectedIndex = this.Cities.FindIndex(c => c.ID == newCity.ID);
@@ -240,6 +203,8 @@ public partial class AddressFrom : INotifyPropertyChanged, IDatabaseInteraction
     {
         BindingExpression? addressOneBinding = AddressOneTextBox.GetBindingExpression(TextBox.TextProperty);
         addressOneBinding?.UpdateSource();
+
+        this.AddressTwo = this.AddressTwoTextBox.Text;
         
         BindingExpression? citiesComboBinding = CitiesComboBox.GetBindingExpression(Selector.SelectedIndexProperty);
         if (citiesComboBinding != null)
@@ -285,11 +250,6 @@ public partial class AddressFrom : INotifyPropertyChanged, IDatabaseInteraction
             return;
         }
         
-        this.AddressOne = this.AddressOneTextBox.Text;
-        this.AddressTwo = this.AddressTwoTextBox.Text;
-        this.SelectedCityId = Cities[CitiesComboBox.SelectedIndex].ID;
-        this.PostalCode = this.PostalCodeTextBox.Text;
-        
         this.DataBaseUpdater();
         this.DialogResult = true;
         this.Close();
@@ -316,7 +276,7 @@ public partial class AddressFrom : INotifyPropertyChanged, IDatabaseInteraction
         command.Parameters.AddWithValue("@addressId", this.ID);
         command.Parameters.AddWithValue("@address", this.AddressOne);
         command.Parameters.AddWithValue("@address2", this.AddressTwo);
-        command.Parameters.AddWithValue("@cityId", this.SelectedCityId);
+        command.Parameters.AddWithValue("@cityId", this.SelectedCity.ID);
         command.Parameters.AddWithValue("@postalCode", this.PostalCode);
         command.Parameters.AddWithValue("@phone", (string)this.HomePhone);
         command.Parameters.AddWithValue("@createDate", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
@@ -335,9 +295,9 @@ public partial class AddressFrom : INotifyPropertyChanged, IDatabaseInteraction
             output += $", {AddressTwo}";
         }
         // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
-        if (this.Cities != null && this.Cities.Count > this.SelectedCityIndex && this.SelectedCityIndex > -1 && this.PostalCode != "")
+        if (this.SelectedCity != null && this.PostalCode != "")
         {
-            output += $", {this.Cities[this.SelectedCityIndex]} {this.PostalCode}";
+            output += $", {SelectedCity} {this.PostalCode}";
         }
         if (this.HomePhone.ToString() != "")
         {

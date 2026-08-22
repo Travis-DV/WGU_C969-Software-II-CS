@@ -1,4 +1,4 @@
-﻿<Window x:Class="WGU_C969_Software_II_CS.AddressFrom"
+﻿<Window x:Class="WGU_C969_Software_II_CS.AddressForm"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -89,7 +89,7 @@
                          HorizontalAlignment="Left" VerticalAlignment="Center" 
                          Margin="12,0" Width="200"
                          Style="{StaticResource ControlInError}"
-                         SelectedIndex="{Binding SelectedCityIndex}">
+                         SelectedItem="{Binding SelectedCity}">
                 </ComboBox>
                 
                 <Button x:Name="CityAddButton"
@@ -142,7 +142,7 @@
             </TextBox.Text>
         </TextBox>
         
-        <Button Grid.ColumnSpan="2" Grid.Row="5" x:Name="DoneButton" Margin="250, 25"
+        <Button Grid.ColumnSpan="2" Grid.Column="0" Grid.Row="5" x:Name="DoneButton" Margin="250, 25"
                 Click="DoneButtonClicked">DoneButton</Button>
     </Grid>
 </Window>

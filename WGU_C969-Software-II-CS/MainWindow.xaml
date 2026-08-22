@@ -40,7 +40,7 @@
                     x:Name="CustomerListView" 
                     Grid.Row="0" 
                     SizeChanged="ListView_SizeChanged"
-                    SelectedIndex="{Binding CustomerSelectedIndex}">
+                    SelectedItem="{Binding SelectedCustomer}">
                     <ListView.View>
                         <GridView AllowsColumnReorder="True"
                                   ColumnHeaderToolTip="Customer Information">
@@ -115,7 +115,7 @@
                 <ListView Grid.Row="0" 
                     x:Name="AppointmentListView" 
                     SizeChanged="ListView_SizeChanged"
-                    SelectedIndex="{Binding AppointmentSelectedIndex, Mode=TwoWay}">
+                    SelectedItem="{Binding SelectedAppointment}">
                     <ListView.View>
                         <GridView AllowsColumnReorder="True"
                                   ColumnHeaderToolTip="Appointment Information">

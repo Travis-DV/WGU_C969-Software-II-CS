@@ -25,46 +25,20 @@ public partial class CityForm : INotifyPropertyChanged, IDatabaseInteraction
             OnPropertyChanged(nameof(CityName));
         }
     }
-    // ReSharper disable once UnusedAutoPropertyAccessor.Local
 
-    // ReSharper disable once InconsistentNaming
-    private int SelectedCountryId = -1;
-    public int SelectedCountryIndex
+    private CountryRecord _selectedCountry;
+    public CountryRecord SelectedCountry
     {
-        get
-        {
-            // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
-            if (this.Countries == null)
-            {
-                return -1;
-            }
-            return this.Countries.FindIndex(c => c.ID == SelectedCountryId);
-        }
+        get => _selectedCountry;
         set
         {
-            int i = value;
-            
-            
-            if (value > this.Countries.Count)
-            {
-                Console.WriteLine("Value greater than Countries");
-                return;
-            }
-
-            if (value == -1)
-            {
-                SelectedCountryId = -1;
-            }
-            else if (value != -1)
-            {
-                SelectedCountryId = this.Countries[value].ID;
-            }
-            Console.WriteLine($"SelectedCountryIndex Changed {value}");
-            OnPropertyChanged(nameof(SelectedCountryIndex));
+            _selectedCountry = value;
+            Console.WriteLine($"SelectedCountry Changed {value}");
+            OnPropertyChanged(nameof(SelectedCountry));
         }
     }
     
-    private AdvancedList<CountryRecord> Countries { get; set; }
+    private List<CountryRecord> Countries { get; set; }
     
     public CityForm(int cityId, string currentUsername)
     {
@@ -73,7 +47,7 @@ public partial class CityForm : INotifyPropertyChanged, IDatabaseInteraction
         
         this.ID = cityId;
         this.CurrentUsername = currentUsername;
-        this.Countries = new AdvancedList<CountryRecord>(this.RenderCountriesComboBox);
+        this.Countries = new List<CountryRecord>();
         this.ReadCountries();
         
         using MySqlConnection connection = new MySqlConnection(MainWindow.ConnectionBuilder.ConnectionString);
@@ -84,9 +58,9 @@ public partial class CityForm : INotifyPropertyChanged, IDatabaseInteraction
         {
             if (reader.Read())
             {
-                this.CityName = reader["city"].ToString() ?? "";
-                this.SelectedCountryId = int.Parse(reader["countryId"].ToString() ?? "-1");
-                OnPropertyChanged(nameof(SelectedCountryIndex));
+                this.CityName = reader.GetString("city");
+                this.SelectedCountry = this.Countries.Find(i => i.ID == reader.GetInt16("countryId"));
+                OnPropertyChanged(nameof(SelectedCountry));
             }
         }
 
@@ -97,7 +71,7 @@ public partial class CityForm : INotifyPropertyChanged, IDatabaseInteraction
     
     private void ReadCountries()
     {
-        this.Countries = new AdvancedList<CountryRecord>(this.RenderCountriesComboBox);
+        this.Countries = new List<CountryRecord>();
         
         using MySqlConnection connection = new MySqlConnection(MainWindow.ConnectionBuilder.ConnectionString);
         connection.Open();
@@ -106,16 +80,10 @@ public partial class CityForm : INotifyPropertyChanged, IDatabaseInteraction
         while (reader.Read())
         {
             this.Countries.Add(new CountryRecord(
-                int.Parse(reader["countryId"].ToString() ?? ""), 
-                reader["country"].ToString() ?? "")
+                reader.GetInt16("countryId"), 
+                reader.GetString("country"))
             );
         }
-    }
-    
-    private void RenderCountriesComboBox()
-    {
-        // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
-        if (this.Countries == null) { return; }
         this.CountriesComboBox.ItemsSource = this.Countries;
     }
     
@@ -148,9 +116,6 @@ public partial class CityForm : INotifyPropertyChanged, IDatabaseInteraction
             return;
         }
         
-        this.CityName = this.CityNameTextBox.Text;
-        this.SelectedCountryId = Countries[CountriesComboBox.SelectedIndex].ID;
-        
         this.DataBaseUpdater();
         this.DialogResult = true;
         this.Close();
@@ -173,7 +138,7 @@ public partial class CityForm : INotifyPropertyChanged, IDatabaseInteraction
                         lastUpdateBy = new.lastUpdateBy", connection);
         command.Parameters.AddWithValue("@cityId", this.ID);
         command.Parameters.AddWithValue("@city", this.CityName);
-        command.Parameters.AddWithValue("@countryId", this.SelectedCountryId);
+        command.Parameters.AddWithValue("@countryId", this.SelectedCountry.ID);
         command.Parameters.AddWithValue("@createDate", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
         command.Parameters.AddWithValue("@createdBy", this.CurrentUsername);
         command.Parameters.AddWithValue("@lastUpdate", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
@@ -194,7 +159,7 @@ public partial class CityForm : INotifyPropertyChanged, IDatabaseInteraction
         {
             return "";
         }
-        return $"{this.CityName}, {this.Countries[SelectedCountryIndex].CountryName}"; //Add country code call when country added
+        return $"{this.CityName}, {this.SelectedCountry.CountryName}"; //Add country code call when country added
     }
     
     public event PropertyChangedEventHandler? PropertyChanged;

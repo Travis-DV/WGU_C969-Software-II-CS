@@ -59,13 +59,13 @@ public partial class CustomerForm : INotifyPropertyChanged, IDatabaseInteraction
         } 
     }
 
-    private AddressFrom _addressFrom;
-    private AddressFrom Address
+    private AddressForm _addressForm;
+    private AddressForm Address
     {
-        get => _addressFrom;
+        get => _addressForm;
         set
         {
-            _addressFrom = value;
+            _addressForm = value;
             OnPropertyChanged(nameof(AddressString));
         }
     }
@@ -82,8 +82,6 @@ public partial class CustomerForm : INotifyPropertyChanged, IDatabaseInteraction
         
         this.ID = customerId;
         this.CurrentUsername = currentUsername;
-        this.AddressMod = false;
-        this.Address = new AddressFrom(this.AddressId, this.CurrentUsername);
         
         using (MySqlConnection connection = new MySqlConnection(MainWindow.ConnectionBuilder.ConnectionString))
         {
@@ -95,12 +93,17 @@ public partial class CustomerForm : INotifyPropertyChanged, IDatabaseInteraction
                 using var reader = command.ExecuteReader();
                 if (reader.Read())
                 {
-                    string[] customerName = (reader["customerName"].ToString() ?? "").Split(" ");
+                    string[] customerName = reader.GetString("customerName").Split(" ");
                     this.FirstName = customerName[0];
                     this.LastName = customerName[1];
-                    this.AddressId = int.Parse(reader["addressId"].ToString() ?? "");
+                    this.AddressId = reader.GetInt16("addressId");
                     this.AddressMod = true;
-                    this.Address = new AddressFrom(this.AddressId, this.CurrentUsername);
+                    this.Address = new AddressForm(this.AddressId, this.CurrentUsername);
+                }
+                else
+                {
+                    this.AddressMod = false;
+                    this.Address = new AddressForm(this.AddressId, this.CurrentUsername);
                 }
             }
         }
@@ -121,14 +124,12 @@ public partial class CustomerForm : INotifyPropertyChanged, IDatabaseInteraction
             using MySqlCommand command = new MySqlCommand("SELECT IFNULL(MAX(addressId), 0) + 1 FROM address;", connection);
             this.AddressId = Convert.ToInt32(command.ExecuteScalar());
         }
-        this.Address = new AddressFrom(this.AddressId, this.CurrentUsername)
-        {
-            Owner = this
-        };
+        AddressForm newAddress = new AddressForm(this.AddressId, this.CurrentUsername);
         this.Address.ShowDialog();
         
         if (this.Address is {DialogResult: true})
         {
+            this.Address = newAddress;
             OnPropertyChanged(nameof(AddressString));
             this.AddressMod = true;
         }
@@ -138,7 +139,7 @@ public partial class CustomerForm : INotifyPropertyChanged, IDatabaseInteraction
     {
         this.AddressId = -1;
         this.AddressMod = false;
-        this.Address = new AddressFrom(this.AddressId, this.CurrentUsername);
+        this.Address = new AddressForm(this.AddressId, this.CurrentUsername);
         this.AddressTextBox.Text = "";
     }
     

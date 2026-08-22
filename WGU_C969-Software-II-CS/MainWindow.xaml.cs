@@ -37,21 +37,13 @@ public partial class MainWindow : INotifyPropertyChanged
         } 
     }
     
-    private int SelectedCustomerId = -1;
-    public int CustomerSelectedIndex
+    private CustomerForm _selectedCustomer;
+    public CustomerForm SelectedCustomer
     {
-        get
-        {
-            // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
-            if (this.Customers == null)
-            {
-                return -1;
-            }
-            return this.Customers.FindIndex(c => c.ID == SelectedCustomerId);
-        }
+        get => _selectedCustomer;
         set
         {
-            if (value != null && value != -1)
+            if (value != null)
             {
                 CustomerMod = true;
             }
@@ -59,29 +51,16 @@ public partial class MainWindow : INotifyPropertyChanged
             {
                 CustomerMod = false;
             }
-            
-            int i = value;
-            if (value > this.Customers.Count)
-            {
-                Console.WriteLine("Value greater than Customers");
-                return;
-            }
 
-            if (value == -1)
-            {
-                SelectedCustomerId = -1;
-            }
-            else if (value != -1)
-            {
-                SelectedCustomerId = this.Customers[value].ID;
-            }
+            _selectedCustomer = value;
+            
             this.LoadAppointmentDisplay();
-            Console.WriteLine($"CustomerSelectedIndex Changed {value}");
-            OnPropertyChanged(nameof(CustomerSelectedIndex));
+            Console.WriteLine($"SelectedCustomer Changed {value}");
+            OnPropertyChanged(nameof(SelectedCustomer));
         }
     }
     
-    private AdvancedList<CustomerForm> Customers { get; set; }
+    private List<CustomerForm> Customers { get; set; }
     
     private bool AppointmentMod
     {
@@ -98,21 +77,13 @@ public partial class MainWindow : INotifyPropertyChanged
         } 
     }
     
-    private int SelectedAppointmentId = -1;
-    public int AppointmentSelectedIndex
+    private AppointmentForm _selectedAppointment;
+    public AppointmentForm SelectedAppointment
     {
-        get
-        {
-            // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
-            if (this.Appointments == null)
-            {
-                return -1;
-            }
-            return this.Appointments.FindIndex(c => c.ID == SelectedAppointmentId);
-        }
+        get => _selectedAppointment;
         set
         {
-            if (value != null && value != -1)
+            if (value != null)
             {
                 AppointmentMod = true;
             }
@@ -120,28 +91,15 @@ public partial class MainWindow : INotifyPropertyChanged
             {
                 AppointmentMod = false;
             }
-            
-            int i = value;
-            if (value > this.Appointments.Count)
-            {
-                Console.WriteLine("Value greater than Appointments");
-                return;
-            }
 
-            if (value == -1)
-            {
-                SelectedAppointmentId = -1;
-            }
-            else if (value != -1)
-            {
-                SelectedAppointmentId = this.Appointments[value].ID;
-            }
-            Console.WriteLine($"SelectedAppointmentId Changed {value}");
-            OnPropertyChanged(nameof(AppointmentSelectedIndex));
+            _selectedAppointment = value;
+            
+            Console.WriteLine($"SelectedAppointment Changed {value}");
+            OnPropertyChanged(nameof(SelectedAppointment));
         }
     }
     
-    private AdvancedList<AppointmentForm> Appointments { get; set; }
+    private List<AppointmentForm> Appointments { get; set; }
     
     private DateTime? _selectedDate;
     public DateTime? SelectedDate
@@ -168,7 +126,7 @@ public partial class MainWindow : INotifyPropertyChanged
                 using var reader = command.ExecuteReader();
                 while (reader.Read())
                 {
-                    customers.Add(new CustomerForm(int.Parse(reader["customerId"].ToString()), this.CurrentUsername));
+                    customers.Add(new CustomerForm(reader.GetInt16("customerId"), this.CurrentUsername));
                 }
             }
         }
@@ -177,45 +135,15 @@ public partial class MainWindow : INotifyPropertyChanged
     
     private void LoadAppointmentDisplay()
     {
-        /*BindingExpression? customerListBinding = this.CustomerListView.GetBindingExpression(Selector.SelectedIndexProperty);
-        BindingExpression? selectDateBinding = this.DatePickCalendar.GetBindingExpression(Selector.SelectedIndexProperty);
-        if (customerListBinding != null)
-        {
-            Validation.ClearInvalid(customerListBinding);
-        }
-        else
-        {
-            throw new Exception("Failed to bind CustomerListView");
-        }
-        if (selectDateBinding != null)
-        {
-            Validation.ClearInvalid(selectDateBinding);
-        }
-        else
-        {
-            throw new Exception("Failed to bind DatePickCalendar");
-        }
-        
-        if (this.SelectedCustomerId == null || this.SelectedCustomerId == -1 || !this.SelectedDate.HasValue)
-        {
-            
-            Validation.MarkInvalid(customerListBinding,
-                new ValidationError(new ExceptionValidationRule(), customerListBinding));
-
-            Validation.MarkInvalid(selectDateBinding,
-                new ValidationError(new ExceptionValidationRule(), customerListBinding));
-            
-            return;
-        }*/
-        if ((this.SelectedCustomerId == null || this.SelectedCustomerId == -1) && !this.SelectedDate.HasValue)
+        if (this.SelectedCustomer == null && !this.SelectedDate.HasValue)
         {
             return;
         }
 
         int? customerId = null;
-        if (this.SelectedCustomerId != -1)
+        if (this.SelectedCustomer != null)
         {
-            customerId  = this.SelectedCustomerId;
+            customerId = this.SelectedCustomer.ID;
         }
 
         ObservableCollection<DisplayAppointment> appointments = new ObservableCollection<DisplayAppointment>();
@@ -242,31 +170,31 @@ WHERE (@date IS NULL OR DATE(appointment.start) = @date)
                 using var reader = command.ExecuteReader();
                 while (reader.Read())
                 {
-                    DateTime start = DateTime.Parse(reader["start"].ToString());
+                    DateTime start = reader.GetDateTime("start");
                     string detail = "";
-                    if (this.SelectedCustomerId == -1 && this.SelectedDate.HasValue)
+                    if (customerId == null && this.SelectedDate.HasValue)
                     {
-                        detail = reader["customerName"].ToString();
+                        detail = reader.GetString("customerName");
                         this.Detail.Header = WGU_C969_Software_II_CS.Resources.MainWindow.CustomerNameDetail;
                     }
-                    else if (this.SelectedCustomerId != -1 && !this.SelectedDate.HasValue)
+                    else if (customerId != null && !this.SelectedDate.HasValue)
                     {
                         detail = DateOnly.FromDateTime(start).ToString();
                         this.Detail.Header = WGU_C969_Software_II_CS.Resources.MainWindow.DateDetail;
                     }
-                    else if (this.SelectedCustomerId != -1 && this.SelectedDate.HasValue)
+                    else if (customerId != null && this.SelectedDate.HasValue)
                     {
-                        detail = reader["description"].ToString();
+                        detail = reader.GetString("description");
                         this.Detail.Header = WGU_C969_Software_II_CS.Resources.MainWindow.DescriptionDetail;
                     }
                     
                     appointments.Add(new DisplayAppointment()
                     {
-                        ID = int.Parse(reader["appointmentId"].ToString()),
-                        CustomerId =  int.Parse(reader["customerId"].ToString()),
-                        UserId = int.Parse(reader["userId"].ToString()),
+                        ID = reader.GetInt16("appointmentId"),
+                        CustomerId =  reader.GetInt16("customerId"),
+                        UserId = reader.GetInt16("userId"),
                         StartTime = start.ToLocalTime().TimeOfDay,
-                        AppointmentTitle = reader["title"].ToString(),
+                        AppointmentTitle = reader.GetString("title"),
                         Detail = detail
                     });
                 }
@@ -277,7 +205,7 @@ WHERE (@date IS NULL OR DATE(appointment.start) = @date)
     
     public MainWindow()
     {
-        /*if (this.ID == -1)
+        if (this.ID == -1)
         {
             LoginWindow loginWindow = new LoginWindow();
             loginWindow.ShowDialog();
@@ -288,17 +216,14 @@ WHERE (@date IS NULL OR DATE(appointment.start) = @date)
             }
             this.ID = loginWindow.ID;
             this.CurrentUsername = loginWindow.Username;
-        }*/
-
-        this.ID = 0;
-        this.CurrentUsername = "Admin"; //TODO UNCOMMENT
+        }
         
         this.DataContext = this;
         InitializeComponent();
         
         MainWindow.CheckCreation(this.CurrentUsername);
 
-        this.Customers = new AdvancedList<CustomerForm>(this.LoadCustomerDisplay);
+        this.Customers = new List<CustomerForm>();
         using (MySqlConnection connection = new MySqlConnection(MainWindow.ConnectionBuilder.ConnectionString))
         {
             connection.Open();
@@ -308,14 +233,14 @@ WHERE (@date IS NULL OR DATE(appointment.start) = @date)
                 using var reader = command.ExecuteReader();
                 while (reader.Read())
                 {
-                    this.Customers.Add(new CustomerForm(int.Parse(reader["customerId"].ToString()), this.CurrentUsername));
+                    this.Customers.Add(new CustomerForm(reader.GetInt16("customerId"), this.CurrentUsername));
                 }
             }
         }
         this.CustomerMod = false;
         
         
-        this.Appointments = new AdvancedList<AppointmentForm>(this.LoadAppointmentDisplay);
+        this.Appointments = new List<AppointmentForm>();
         using (MySqlConnection connection = new MySqlConnection(MainWindow.ConnectionBuilder.ConnectionString))
         {
             connection.Open();
@@ -325,9 +250,9 @@ WHERE (@date IS NULL OR DATE(appointment.start) = @date)
                 using var reader = command.ExecuteReader();
                 while (reader.Read())
                 {
-                    this.Appointments.Add(new AppointmentForm(int.Parse(reader["appointmentId"].ToString()),
-                        this.CurrentUsername, int.Parse(reader["customerId"].ToString()),
-                        int.Parse(reader["userId"].ToString())));
+                    this.Appointments.Add(new AppointmentForm(reader.GetInt16("appointmentId"),
+                        this.CurrentUsername, reader.GetInt16("customerId"),
+                        reader.GetInt16("userId")));
                 }
             }
         }
@@ -361,6 +286,9 @@ WHERE appointment.start BETWEEN NOW() and DATE_ADD(NOW(), INTERVAL 15 MINUTE);",
             }
         }
         
+        this.LoadCustomerDisplay();
+        this.LoadAppointmentDisplay();
+        
         this.CustomerIDColumn.Header = WGU_C969_Software_II_CS.Resources.MainWindow.ItemIDColumn;
         this.CustomerFirstNameColumn.Header = WGU_C969_Software_II_CS.Resources.MainWindow.CustomerFirstNameColumn;
         this.CustomerLastNameColumn.Header = WGU_C969_Software_II_CS.Resources.MainWindow.CustomerLastNameColumn;
@@ -377,30 +305,24 @@ WHERE appointment.start BETWEEN NOW() and DATE_ADD(NOW(), INTERVAL 15 MINUTE);",
     
     private void CustomerModButtonClicked(object sender, RoutedEventArgs e)
     {
-        if (this.CustomerSelectedIndex == -1)
+        if (this.SelectedCustomer == null)
         {
             using MySqlConnection connection = new MySqlConnection(MainWindow.ConnectionBuilder.ConnectionString);
             connection.Open();
             using MySqlCommand command = new MySqlCommand("SELECT IFNULL(MAX(customerId), 0) + 1 FROM customer;", connection);
             
-            CustomerForm newCustomer = new CustomerForm(int.Parse(command.ExecuteScalar().ToString()), this.CurrentUsername)
-            {
-                Owner = this
-            };
+            CustomerForm newCustomer = new CustomerForm(int.Parse(command.ExecuteScalar().ToString()), this.CurrentUsername);
             newCustomer.ShowDialog();
         }
         
         List<CustomerForm> moddedCustomers = new List<CustomerForm>();
         foreach (CustomerForm selectedItem in this.CustomerListView.SelectedItems)
         {
-            CustomerForm newCustomer = new CustomerForm(selectedItem.ID, this.CurrentUsername)
-            {
-                Owner = this
-            };
+            CustomerForm newCustomer = new CustomerForm(selectedItem.ID, this.CurrentUsername);
             newCustomer.ShowDialog();
         }
         
-        this.Customers = new AdvancedList<CustomerForm>(this.LoadCustomerDisplay);
+        this.Customers = new List<CustomerForm>();
         using (MySqlConnection connection = new MySqlConnection(MainWindow.ConnectionBuilder.ConnectionString))
         {
             connection.Open();
@@ -410,10 +332,11 @@ WHERE appointment.start BETWEEN NOW() and DATE_ADD(NOW(), INTERVAL 15 MINUTE);",
                 using var reader = command.ExecuteReader();
                 while (reader.Read())
                 {
-                    this.Customers.Add(new CustomerForm(int.Parse(reader["customerId"].ToString()), this.CurrentUsername));
+                    this.Customers.Add(new CustomerForm(reader.GetInt16("customerId"), this.CurrentUsername));
                 }
             }
         }
+        
         LoadCustomerDisplay();
     }
     
@@ -444,8 +367,9 @@ WHERE appointment.start BETWEEN NOW() and DATE_ADD(NOW(), INTERVAL 15 MINUTE);",
     
     private void CustomerClearButtonClicked(object sender, RoutedEventArgs e)
     {
-        this.CustomerSelectedIndex = -1;
+        //this.SelectedCustomer = null;
         this.CustomerListView.SelectedIndex = -1;
+        Console.WriteLine(this.SelectedCustomer);
     }
     
     private void DateClearButtonClicked(object sender, RoutedEventArgs e)
@@ -455,7 +379,7 @@ WHERE appointment.start BETWEEN NOW() and DATE_ADD(NOW(), INTERVAL 15 MINUTE);",
     
     private void AppointmentModButtonClicked(object sender, RoutedEventArgs e)
     {
-        if (this.AppointmentSelectedIndex == -1)
+        if (this.SelectedAppointment == null)
         {
             BindingExpression? customerListBinding = CustomerListView.GetBindingExpression(Selector.SelectedIndexProperty);
             if (customerListBinding != null)
@@ -480,24 +404,18 @@ WHERE appointment.start BETWEEN NOW() and DATE_ADD(NOW(), INTERVAL 15 MINUTE);",
             connection.Open();
             using MySqlCommand command = new MySqlCommand("SELECT IFNULL(MAX(appointmentId), 0) + 1 FROM appointment;", connection);
             
-            AppointmentForm newAppointment = new AppointmentForm(int.Parse(command.ExecuteScalar().ToString()), this.CurrentUsername, this.SelectedCustomerId, this.ID)
-            {
-                Owner = this
-            };
+            AppointmentForm newAppointment = new AppointmentForm(int.Parse(command.ExecuteScalar().ToString()), this.CurrentUsername, this.SelectedCustomer.ID, this.ID);
             newAppointment.ShowDialog();
         }
         
         List<AppointmentForm> moddedAppointments = new List<AppointmentForm>();
         foreach (DisplayAppointment selectedItem in this.AppointmentListView.SelectedItems)
         {
-            AppointmentForm newAppointment = new AppointmentForm(selectedItem.ID, this.CurrentUsername, selectedItem.CustomerId, selectedItem.UserId)
-            {
-                Owner = this
-            };
+            AppointmentForm newAppointment = new AppointmentForm(selectedItem.ID, this.CurrentUsername, selectedItem.CustomerId, selectedItem.UserId);
             newAppointment.ShowDialog();
         }
         
-        this.Appointments = new AdvancedList<AppointmentForm>(this.LoadAppointmentDisplay);
+        this.Appointments = new List<AppointmentForm>();
         using (MySqlConnection connection = new MySqlConnection(MainWindow.ConnectionBuilder.ConnectionString))
         {
             connection.Open();
@@ -507,10 +425,11 @@ WHERE appointment.start BETWEEN NOW() and DATE_ADD(NOW(), INTERVAL 15 MINUTE);",
                 using var reader = command.ExecuteReader();
                 while (reader.Read())
                 {
-                    this.Appointments.Add(new AppointmentForm(int.Parse(reader["appointmentId"].ToString()), this.CurrentUsername, int.Parse(reader["customerId"].ToString()), int.Parse(reader["userId"].ToString())));
+                    this.Appointments.Add(new AppointmentForm(reader.GetInt16("appointmentId"), this.CurrentUsername, reader.GetInt16("customerId"), reader.GetInt16("userId")));
                 }
             }
         }
+        
         this.LoadAppointmentDisplay();
     }
     
@@ -529,7 +448,7 @@ WHERE appointment.start BETWEEN NOW() and DATE_ADD(NOW(), INTERVAL 15 MINUTE);",
                     using var reader = command.ExecuteReader();
                     while (reader.Read())
                     {
-                        customerName = reader["customerName"].ToString();
+                        customerName = reader.GetString("customerName");
                     }
                 }
             }
@@ -723,12 +642,12 @@ WHERE appointment.start BETWEEN NOW() and DATE_ADD(NOW(), INTERVAL 15 MINUTE);",
                 while (reader.Read())
                 {
                     Console.WriteLine(
-                        $@"ID: {reader["countryId"]}, " +
-                        $@"Country: {reader["country"]}, " +
-                        $@"Created: {reader["createDate"]}, " +
-                        $@"By: {reader["createdBy"]}, " +
-                        $@"Updated: {reader["lastUpdate"]}, " +
-                        $@"By: {reader["lastUpdateBy"]}"
+                        $@"ID: {reader.GetString("countryId")}, " +
+                        $@"Country: {reader.GetString("country")}, " +
+                        $@"Created: {reader.GetString("createDate")}, " +
+                        $@"By: {reader.GetString("createdBy")}, " +
+                        $@"Updated: {reader.GetString("lastUpdate")}, " +
+                        $@"By: {reader.GetString("lastUpdateBy")}"
                     );
                 }
             }

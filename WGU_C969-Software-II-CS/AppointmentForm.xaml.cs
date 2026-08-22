@@ -102,6 +102,7 @@ public partial class AppointmentForm : INotifyPropertyChanged, IDatabaseInteract
         get
         {
             List<string> output = new List<string>();
+            List<DateTime> availableStartTimes = this.AvailableStartTimes;
             
             TimeZoneInfo localZone = TimeZoneInfo.Local;
             string zoneName = localZone.IsDaylightSavingTime(DateTime.Now) 
@@ -114,7 +115,7 @@ public partial class AppointmentForm : INotifyPropertyChanged, IDatabaseInteract
                 .Select(word => word[0])
                 .ToArray());
 
-            foreach (DateTime startTime in this.AvailableStartTimes)
+            foreach (DateTime startTime in availableStartTimes)
             {
                 DateTime localStartTime = startTime.ToLocalTime();
                 
@@ -365,7 +366,7 @@ public partial class AppointmentForm : INotifyPropertyChanged, IDatabaseInteract
         {
             PhoneClass phone = new PhoneClass();
             phone = reader.GetString("phone");
-            this.Contact = $"{reader["customerName"].ToString()} ({phone.ToString()}). {reader["address"].ToString()}, {reader["city"]}";
+            this.Contact = $"{reader.GetString("customerName")} ({phone.ToString()}). {reader.GetString("address")}, {reader.GetString("city")}";
         }
     }
     
@@ -403,7 +404,8 @@ public partial class AppointmentForm : INotifyPropertyChanged, IDatabaseInteract
                 this.url = reader.GetString("url");
                 DateTime start = DateTime.SpecifyKind(reader.GetDateTime("start"), DateTimeKind.Utc);
                 this.SelectDateCalendar.SelectedDate = start;
-                this.SelectStartTimeComboBox.SelectedIndex = AvailableStartTimes.FindIndex(time => time.TimeOfDay == start.TimeOfDay);
+                List<DateTime> availableStartTimes = this.AvailableStartTimes;
+                this.SelectStartTimeComboBox.SelectedIndex = availableStartTimes.FindIndex(time => time.TimeOfDay == start.TimeOfDay);
                 DateTime end = DateTime.SpecifyKind(reader.GetDateTime("end"), DateTimeKind.Utc);
                 this.SelectEndTimeComboBox.SelectedIndex = AvailableEndTimes.FindIndex(time => time.TimeOfDay == end.TimeOfDay);
             }
