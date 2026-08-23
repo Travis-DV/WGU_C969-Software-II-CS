@@ -17,7 +17,6 @@ namespace WGU_C969_Software_II_CS;
 /// </summary>
 public partial class MainWindow : INotifyPropertyChanged
 {
-    public delegate void PropertyChangedDelegate(string name);
 
     private string CurrentUsername { get; init; }
     private int ID { get; init; } = -1;
@@ -47,7 +46,7 @@ public partial class MainWindow : INotifyPropertyChanged
             {
                 CustomerMod = true;
             }
-            else
+            else if (value == null)
             {
                 CustomerMod = false;
             }
@@ -77,8 +76,8 @@ public partial class MainWindow : INotifyPropertyChanged
         } 
     }
     
-    private AppointmentForm _selectedAppointment;
-    public AppointmentForm SelectedAppointment
+    private DisplayAppointment _selectedAppointment;
+    public DisplayAppointment SelectedAppointment
     {
         get => _selectedAppointment;
         set
@@ -135,8 +134,11 @@ public partial class MainWindow : INotifyPropertyChanged
     
     private void LoadAppointmentDisplay()
     {
+        ObservableCollection<DisplayAppointment> appointments = new ObservableCollection<DisplayAppointment>();
+        
         if (this.SelectedCustomer == null && !this.SelectedDate.HasValue)
         {
+            this.AppointmentListView.ItemsSource = appointments;
             return;
         }
 
@@ -145,8 +147,7 @@ public partial class MainWindow : INotifyPropertyChanged
         {
             customerId = this.SelectedCustomer.ID;
         }
-
-        ObservableCollection<DisplayAppointment> appointments = new ObservableCollection<DisplayAppointment>();
+        
         using (MySqlConnection connection = new MySqlConnection(MainWindow.ConnectionBuilder.ConnectionString))
         {
             connection.Open();
@@ -205,7 +206,7 @@ WHERE (@date IS NULL OR DATE(appointment.start) = @date)
     
     public MainWindow()
     {
-        if (this.ID == -1)
+        /*if (this.ID == -1)
         {
             LoginWindow loginWindow = new LoginWindow();
             loginWindow.ShowDialog();
@@ -216,7 +217,10 @@ WHERE (@date IS NULL OR DATE(appointment.start) = @date)
             }
             this.ID = loginWindow.ID;
             this.CurrentUsername = loginWindow.Username;
-        }
+        }*/ //TODO
+
+        this.ID = 0;
+        this.CurrentUsername = "Admin";
         
         this.DataContext = this;
         InitializeComponent();
@@ -381,7 +385,7 @@ WHERE appointment.start BETWEEN NOW() and DATE_ADD(NOW(), INTERVAL 15 MINUTE);",
     {
         if (this.SelectedAppointment == null)
         {
-            BindingExpression? customerListBinding = CustomerListView.GetBindingExpression(Selector.SelectedIndexProperty);
+            BindingExpression? customerListBinding = CustomerListView.GetBindingExpression(Selector.SelectedItemProperty);
             if (customerListBinding != null)
             {
                 if (CustomerListView.SelectedIndex < 0)

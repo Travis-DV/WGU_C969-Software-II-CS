@@ -125,12 +125,12 @@ public partial class CustomerForm : INotifyPropertyChanged, IDatabaseInteraction
             this.AddressId = Convert.ToInt32(command.ExecuteScalar());
         }
         AddressForm newAddress = new AddressForm(this.AddressId, this.CurrentUsername);
-        this.Address.ShowDialog();
+        newAddress.ShowDialog();
         
-        if (this.Address is {DialogResult: true})
+        if (newAddress is {DialogResult: true})
         {
             this.Address = newAddress;
-            OnPropertyChanged(nameof(AddressString));
+            this.AddressString = Address?.ToString();
             this.AddressMod = true;
         }
     }
@@ -172,8 +172,8 @@ public partial class CustomerForm : INotifyPropertyChanged, IDatabaseInteraction
             return;
         }
         
-        this.FirstName = this.FirstNameTextBox.Text;
-        this.LastName = this.LastNameTextBox.Text;
+        this.FirstName = this.FirstNameTextBox.Text.Trim();
+        this.LastName = this.LastNameTextBox.Text.Trim();
         this.AddressId = this.Address.ID;
         
         this.DataBaseUpdater();

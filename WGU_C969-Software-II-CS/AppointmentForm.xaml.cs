@@ -534,7 +534,7 @@ public partial class AppointmentForm : INotifyPropertyChanged, IDatabaseInteract
         this.AppointmentTime[1] =
             this.SelectDateCalendar.SelectedDate.Value.Date.Add(selectedUtcEndTime.TimeOfDay);
         
-        MessageBox.Show($"offset {TimeZoneInfo.Local.GetUtcOffset(AppointmentTime[0])} Selected {SelectedStartTime} Saved {AppointmentTime[0].TimeOfDay}, timezone local {TimeZoneInfo.Local} DateTimeKindLocal {DateTimeKind.Local} AvailableStartTimeIndex {selectedUtcStartTime} AvailableStartTimeLOCALIndex {AvailableStartTimesLocal[this.SelectStartTimeComboBox.SelectedIndex]}");
+        //MessageBox.Show($"offset {TimeZoneInfo.Local.GetUtcOffset(AppointmentTime[0])} Selected {SelectedStartTime} Saved {AppointmentTime[0].TimeOfDay}, timezone local {TimeZoneInfo.Local} DateTimeKindLocal {DateTimeKind.Local} AvailableStartTimeIndex {selectedUtcStartTime} AvailableStartTimeLOCALIndex {AvailableStartTimesLocal[this.SelectStartTimeComboBox.SelectedIndex]}");
         
         this.DataBaseUpdater();
         this.DialogResult = true;
@@ -576,12 +576,12 @@ public partial class AppointmentForm : INotifyPropertyChanged, IDatabaseInteract
         command.Parameters.AddWithValue("@appointmentId", this.ID);
         command.Parameters.AddWithValue("@customerId", this.CustomerId);
         command.Parameters.AddWithValue("@userId", this.UserId);
-        command.Parameters.AddWithValue("@title", this.AppointmentTitle);
-        command.Parameters.AddWithValue("@description", this.Description);
+        command.Parameters.AddWithValue("@title", this.AppointmentTitle.Trim());
+        command.Parameters.AddWithValue("@description", this.Description.Trim());
         command.Parameters.AddWithValue("@location", this.SelectedLocation);
-        command.Parameters.AddWithValue("@contact", this.Contact);
+        command.Parameters.AddWithValue("@contact", this.Contact.Trim());
         command.Parameters.AddWithValue("@type", this.SelectedType);
-        command.Parameters.AddWithValue("@url", this.url);
+        command.Parameters.AddWithValue("@url", this.url.Trim());
         command.Parameters.AddWithValue("@start", this.AppointmentTime[0]);
         command.Parameters.AddWithValue("@end", this.AppointmentTime[1]);
         command.Parameters.AddWithValue("@createDate", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));

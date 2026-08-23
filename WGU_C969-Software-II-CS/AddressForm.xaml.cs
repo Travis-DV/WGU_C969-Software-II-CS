@@ -11,7 +11,7 @@ namespace WGU_C969_Software_II_CS;
 public partial class AddressForm : INotifyPropertyChanged, IDatabaseInteraction
 {
     // ReSharper disable once InconsistentNaming
-    public int ID { get; init; }
+    public int ID { get; }
     private string CurrentUsername { get; }
     
     private string _addressOne = "";
@@ -29,8 +29,8 @@ public partial class AddressForm : INotifyPropertyChanged, IDatabaseInteraction
     private string AddressTwo = "";
     
     // ReSharper disable once InconsistentNaming
-    private CityForm _selectedCity;
-    public CityForm SelectedCity
+    private CityRecord _selectedCity;
+    public CityRecord SelectedCity
     {
         get => _selectedCity;
         set
@@ -89,7 +89,7 @@ public partial class AddressForm : INotifyPropertyChanged, IDatabaseInteraction
                         this.AddressOne = reader.GetString("address");
                         this.AddressTwo = reader.GetString("address2");
                         this.AddressTwoTextBox.Text = this.AddressTwo;
-                        this.SelectedCity = this.Cities.Find(i => i.ID == reader.GetInt16("cityId"));
+                        this.SelectedCity = this.Cities.Find(i => i.ID == reader.GetInt16("cityId")).ToCityRecord();
                         this.PostalCode = reader.GetString("postalCode");
                         this.HomePhone.Validate(reader.GetString("phone"), CultureInfo.CurrentCulture);
                         OnPropertyChanged(nameof(PhoneNumberString));
@@ -122,8 +122,14 @@ public partial class AddressForm : INotifyPropertyChanged, IDatabaseInteraction
         {
             this.Cities.Add(new CityForm(reader.GetInt16("cityId"), this.CurrentUsername));
         }
+
+        List<CityRecord> cities = new List<CityRecord>();
+        foreach (CityForm cityForm in this.Cities)
+        {
+            cities.Add(cityForm.ToCityRecord());
+        }
         
-        this.CitiesComboBox.ItemsSource = this.Cities;
+        this.CitiesComboBox.ItemsSource = cities;
     }
 
     private void CityPushButtonClicked(int id)
@@ -150,7 +156,7 @@ public partial class AddressForm : INotifyPropertyChanged, IDatabaseInteraction
 
     private void CityModButtonClicked(object sender, RoutedEventArgs e)
     {
-        BindingExpression? citiesComboBinding = CitiesComboBox.GetBindingExpression(Selector.SelectedIndexProperty);
+        BindingExpression? citiesComboBinding = CitiesComboBox.GetBindingExpression(Selector.SelectedItemProperty);
         if (citiesComboBinding != null)
         {
             if (CitiesComboBox.SelectedIndex < 0)
@@ -206,10 +212,10 @@ public partial class AddressForm : INotifyPropertyChanged, IDatabaseInteraction
 
         this.AddressTwo = this.AddressTwoTextBox.Text;
         
-        BindingExpression? citiesComboBinding = CitiesComboBox.GetBindingExpression(Selector.SelectedIndexProperty);
+        BindingExpression? citiesComboBinding = CitiesComboBox.GetBindingExpression(Selector.SelectedItemProperty);
         if (citiesComboBinding != null)
         {
-            if (CitiesComboBox.SelectedIndex < 0)
+            if (SelectedCity == null)
             {
                 Validation.MarkInvalid(citiesComboBinding,
                     new ValidationError(new ExceptionValidationRule(), citiesComboBinding));
@@ -227,20 +233,15 @@ public partial class AddressForm : INotifyPropertyChanged, IDatabaseInteraction
         BindingExpression? postalCodeBinding = PostalCodeTextBox.GetBindingExpression(TextBox.TextProperty);
         postalCodeBinding?.UpdateSource();
         
-        if (HomePhoneTextBox.Text != "")
+        BindingExpression? homePhoneBinding = HomePhoneTextBox.GetBindingExpression(TextBox.TextProperty);
+        homePhoneBinding?.UpdateSource();
+
+        ValidationResult phoneValidation = this.HomePhone.Validate(HomePhoneTextBox.Text, CultureInfo.CurrentCulture);
+        if (!phoneValidation.IsValid)
         {
-            BindingExpression? homePhoneBinding = HomePhoneTextBox.GetBindingExpression(TextBox.TextProperty);
-            homePhoneBinding?.UpdateSource();
-            if (homePhoneBinding is { HasError: false })
-            {
-                this.HomePhone.Validate(HomePhoneTextBox.Text, CultureInfo.CurrentCulture);
-                this.HomePhoneTextBox.Text = this.HomePhone.ToString();
-            }
-            else
-            {
-                this.HomePhone.Validate("0 000 000 0000", CultureInfo.CurrentCulture);
-            }
+            return;
         }
+        this.HomePhoneTextBox.Text = this.HomePhone.ToString();
 
         if (addressOneBinding is { HasError: true } ||
             citiesComboBinding is { HasError: true } ||
@@ -274,10 +275,10 @@ public partial class AddressForm : INotifyPropertyChanged, IDatabaseInteraction
                         lastUpdate = new.lastUpdate,
                         lastUpdateBy = new.lastUpdateBy", connection);
         command.Parameters.AddWithValue("@addressId", this.ID);
-        command.Parameters.AddWithValue("@address", this.AddressOne);
-        command.Parameters.AddWithValue("@address2", this.AddressTwo);
+        command.Parameters.AddWithValue("@address", this.AddressOne.Trim());
+        command.Parameters.AddWithValue("@address2", this.AddressTwo.Trim());
         command.Parameters.AddWithValue("@cityId", this.SelectedCity.ID);
-        command.Parameters.AddWithValue("@postalCode", this.PostalCode);
+        command.Parameters.AddWithValue("@postalCode", this.PostalCode.Trim());
         command.Parameters.AddWithValue("@phone", (string)this.HomePhone);
         command.Parameters.AddWithValue("@createDate", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
         command.Parameters.AddWithValue("@createdBy", this.CurrentUsername);
@@ -326,7 +327,7 @@ public class PostalValidator : ValidationRule
             return new ValidationResult(false, "Must be a number");
         }
 
-        if (code.ToString() is { Length: < 5 })
+        if (code.ToString().ToList() is not { Count: 5 })
         {
             return new ValidationResult(false, "Must be a 5 digit postal code");
         }

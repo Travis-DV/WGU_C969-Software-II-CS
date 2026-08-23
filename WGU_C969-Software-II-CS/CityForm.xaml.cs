@@ -47,7 +47,6 @@ public partial class CityForm : INotifyPropertyChanged, IDatabaseInteraction
         
         this.ID = cityId;
         this.CurrentUsername = currentUsername;
-        this.Countries = new List<CountryRecord>();
         this.ReadCountries();
         
         using MySqlConnection connection = new MySqlConnection(MainWindow.ConnectionBuilder.ConnectionString);
@@ -84,6 +83,7 @@ public partial class CityForm : INotifyPropertyChanged, IDatabaseInteraction
                 reader.GetString("country"))
             );
         }
+        
         this.CountriesComboBox.ItemsSource = this.Countries;
     }
     
@@ -92,10 +92,10 @@ public partial class CityForm : INotifyPropertyChanged, IDatabaseInteraction
         BindingExpression? cityBinding = CityNameTextBox.GetBindingExpression(TextBox.TextProperty);
         cityBinding?.UpdateSource();
         
-        BindingExpression? countriesComboBinding = CountriesComboBox.GetBindingExpression(Selector.SelectedIndexProperty);
+        BindingExpression? countriesComboBinding = CountriesComboBox.GetBindingExpression(Selector.SelectedItemProperty);
         if (countriesComboBinding != null)
         {
-            if (CountriesComboBox.SelectedIndex < 0)
+            if (SelectedCountry == null)
             {
                 Validation.MarkInvalid(countriesComboBinding,
                     new ValidationError(new ExceptionValidationRule(), countriesComboBinding));
@@ -137,7 +137,7 @@ public partial class CityForm : INotifyPropertyChanged, IDatabaseInteraction
                         lastUpdate = new.lastUpdate,
                         lastUpdateBy = new.lastUpdateBy", connection);
         command.Parameters.AddWithValue("@cityId", this.ID);
-        command.Parameters.AddWithValue("@city", this.CityName);
+        command.Parameters.AddWithValue("@city", this.CityName.Trim());
         command.Parameters.AddWithValue("@countryId", this.SelectedCountry.ID);
         command.Parameters.AddWithValue("@createDate", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
         command.Parameters.AddWithValue("@createdBy", this.CurrentUsername);
@@ -146,10 +146,23 @@ public partial class CityForm : INotifyPropertyChanged, IDatabaseInteraction
 
         command.ExecuteNonQuery();
     }
-    
-    public static implicit operator string(CityForm city)
+
+    public CityRecord ToCityRecord()
     {
-        return city.ToString();
+        string countryName = "Error";
+        // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
+        if (this.SelectedCountry != null)
+        {
+            countryName = this.SelectedCountry.CountryName;
+        }
+
+
+        return new CityRecord()
+        {
+            ID = this.ID,
+            CityName = this.CityName,
+            CountryName = countryName
+        };
     }
     
     public override string ToString()
@@ -159,7 +172,15 @@ public partial class CityForm : INotifyPropertyChanged, IDatabaseInteraction
         {
             return "";
         }
-        return $"{this.CityName}, {this.SelectedCountry.CountryName}"; //Add country code call when country added
+
+        string countryName = "Error";
+        // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
+        if (this.SelectedCountry != null)
+        {
+            countryName = this.SelectedCountry.CountryName;
+        }
+        
+        return $"{this.CityName}, {countryName}"; //Add country code call when country added
     }
     
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -168,4 +189,14 @@ public partial class CityForm : INotifyPropertyChanged, IDatabaseInteraction
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
+}
+
+public record CityRecord
+{
+    public required int ID { get; init; }
+    public required string CityName { get; init; }
+    public required string CountryName { get; init; }
+
+    public override string ToString() =>
+        $"{this.CityName}, {this.CountryName}";
 }
