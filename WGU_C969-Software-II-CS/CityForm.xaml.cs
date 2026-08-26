@@ -40,6 +40,27 @@ public partial class CityForm : INotifyPropertyChanged, IDatabaseInteraction
     
     private List<CountryRecord> Countries { get; set; }
     
+    private void ReadCountries()
+    {
+        this.Countries = new List<CountryRecord>();
+        
+        using MySqlConnection connection = new MySqlConnection(MainWindow.ConnectionBuilder.ConnectionString);
+        connection.Open();
+        using MySqlCommand command = new MySqlCommand("SELECT * FROM country", connection);
+        using var reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            this.Countries.Add(new CountryRecord(
+                reader.GetInt16("countryId"), 
+                reader.GetString("country"))
+            );
+        }
+
+        this.Countries = this.Countries.OrderBy(country => country.CountryName).ToList();
+        
+        this.CountriesComboBox.ItemsSource = this.Countries;
+    }
+    
     public CityForm(int cityId, string currentUsername)
     {
         this.DataContext = this;
@@ -66,25 +87,6 @@ public partial class CityForm : INotifyPropertyChanged, IDatabaseInteraction
         this.CityNameLabel.Content = WGU_C969_Software_II_CS.Resources.CityFormLocal.CityNameLabel;
         this.CountryLabel.Content = WGU_C969_Software_II_CS.Resources.CityFormLocal.CountryComboBoxLabel;
         this.DoneButton.Content = WGU_C969_Software_II_CS.Resources.CustomerFormLocal.DoneButton;
-    }
-    
-    private void ReadCountries()
-    {
-        this.Countries = new List<CountryRecord>();
-        
-        using MySqlConnection connection = new MySqlConnection(MainWindow.ConnectionBuilder.ConnectionString);
-        connection.Open();
-        using MySqlCommand command = new MySqlCommand("SELECT * FROM country", connection);
-        using var reader = command.ExecuteReader();
-        while (reader.Read())
-        {
-            this.Countries.Add(new CountryRecord(
-                reader.GetInt16("countryId"), 
-                reader.GetString("country"))
-            );
-        }
-        
-        this.CountriesComboBox.ItemsSource = this.Countries;
     }
     
     private void DoneButtonClicked(object sender, RoutedEventArgs e)

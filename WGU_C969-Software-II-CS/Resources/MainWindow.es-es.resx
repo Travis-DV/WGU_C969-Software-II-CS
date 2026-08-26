@@ -86,4 +86,19 @@
     <data name="Error" xml:space="preserve">
         <value>Error</value>
     </data>
+    <data name="GenerateReportButton" xml:space="preserve">
+        <value>Generar informe</value>
+    </data>
+    <data name="ReportsComboBox_TypesPerMonth" xml:space="preserve">
+        <value>Número de tipos de cita al mes</value>
+    </data>
+    <data name="ReportsComboBox_UserSchedules" xml:space="preserve">
+        <value>Todos los horarios de usuario</value>
+    </data>
+    <data name="ReportComboBox_AverageAppointments" xml:space="preserve">
+        <value>Número promedio de citas al mes</value>
+    </data>
+    <data name="ReportsComboBox_SuccessfullySaved" xml:space="preserve">
+        <value>Informe guardado correctamente en</value>
+    </data>
 </root>

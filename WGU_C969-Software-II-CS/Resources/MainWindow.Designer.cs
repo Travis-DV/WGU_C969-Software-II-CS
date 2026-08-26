@@ -231,6 +231,15 @@ namespace WGU_C969_Software_II_CS.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Generate Report.
+        /// </summary>
+        internal static string GenerateReportButton {
+            get {
+                return ResourceManager.GetString("GenerateReportButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Incorrect username or password.
         /// </summary>
         internal static string IncorrectLogin {
@@ -263,6 +272,42 @@ namespace WGU_C969_Software_II_CS.Resources {
         internal static string PossessiveGeneric {
             get {
                 return ResourceManager.GetString("PossessiveGeneric", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Average Number of appointments per-month.
+        /// </summary>
+        internal static string ReportComboBox_AverageAppointments {
+            get {
+                return ResourceManager.GetString("ReportComboBox_AverageAppointments", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Successfully saved report to.
+        /// </summary>
+        internal static string ReportsComboBox_SuccessfullySaved {
+            get {
+                return ResourceManager.GetString("ReportsComboBox_SuccessfullySaved", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Number of appointment types per-month.
+        /// </summary>
+        internal static string ReportsComboBox_TypesPerMonth {
+            get {
+                return ResourceManager.GetString("ReportsComboBox_TypesPerMonth", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to All user schedules.
+        /// </summary>
+        internal static string ReportsComboBox_UserSchedules {
+            get {
+                return ResourceManager.GetString("ReportsComboBox_UserSchedules", resourceCulture);
             }
         }
         

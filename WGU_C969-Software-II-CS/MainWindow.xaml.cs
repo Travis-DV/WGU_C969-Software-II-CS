@@ -3,6 +3,7 @@ using System.ComponentModel;
 using MySqlConnector;
 using System.Globalization;
 using System.IO;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
@@ -115,7 +116,7 @@ public partial class MainWindow : INotifyPropertyChanged
 
     private void LoadCustomerDisplay()
     {
-        ObservableCollection<CustomerForm> customers = new ObservableCollection<CustomerForm>();
+        List<CustomerForm> customers = new List<CustomerForm>();
         using (MySqlConnection connection = new MySqlConnection(MainWindow.ConnectionBuilder.ConnectionString))
         {
             connection.Open();
@@ -129,12 +130,14 @@ public partial class MainWindow : INotifyPropertyChanged
                 }
             }
         }
+
+        customers = customers.OrderBy(customer => customer.ID).ToList();
         this.CustomerListView.ItemsSource = customers;
     }
     
     private void LoadAppointmentDisplay()
     {
-        ObservableCollection<DisplayAppointment> appointments = new ObservableCollection<DisplayAppointment>();
+        List<DisplayAppointment> appointments = new List<DisplayAppointment>();
         
         if (this.SelectedCustomer == null && !this.SelectedDate.HasValue)
         {
@@ -201,6 +204,9 @@ WHERE (@date IS NULL OR DATE(appointment.start) = @date)
                 }
             }
         }
+
+        appointments = appointments.OrderBy(appointment => appointment.ID).ToList();
+        
         this.AppointmentListView.ItemsSource = appointments;
     }
     
@@ -292,7 +298,14 @@ WHERE appointment.start BETWEEN NOW() and DATE_ADD(NOW(), INTERVAL 15 MINUTE);",
         
         this.LoadCustomerDisplay();
         this.LoadAppointmentDisplay();
-        
+
+        this.ReportComboBox.ItemsSource = new List<string>
+        {
+            WGU_C969_Software_II_CS.Resources.MainWindow.ReportsComboBox_TypesPerMonth, //Number of appointment types per-month
+            WGU_C969_Software_II_CS.Resources.MainWindow.ReportsComboBox_UserSchedules, //All user schedules 
+            WGU_C969_Software_II_CS.Resources.MainWindow.ReportComboBox_AverageAppointments //Average Number of appointments per-month
+        };
+
         this.CustomerIDColumn.Header = WGU_C969_Software_II_CS.Resources.MainWindow.ItemIDColumn;
         this.CustomerFirstNameColumn.Header = WGU_C969_Software_II_CS.Resources.MainWindow.CustomerFirstNameColumn;
         this.CustomerLastNameColumn.Header = WGU_C969_Software_II_CS.Resources.MainWindow.CustomerLastNameColumn;
@@ -305,6 +318,8 @@ WHERE appointment.start BETWEEN NOW() and DATE_ADD(NOW(), INTERVAL 15 MINUTE);",
         this.AppointmentStartTimeColumn.Header = WGU_C969_Software_II_CS.Resources.MainWindow.AppointmentStartTimeColumn;
         this.AppointmentTitleColumn.Header = WGU_C969_Software_II_CS.Resources.MainWindow.AppointmentTitleColumn;
         this.AppointmentDeleteButton.Content = WGU_C969_Software_II_CS.Resources.MainWindow.AppointmentDeleteButton;
+
+        this.ReportButton.Content = WGU_C969_Software_II_CS.Resources.MainWindow.GenerateReportButton;
     }
     
     private void CustomerModButtonClicked(object sender, RoutedEventArgs e)
@@ -474,6 +489,128 @@ WHERE appointment.start BETWEEN NOW() and DATE_ADD(NOW(), INTERVAL 15 MINUTE);",
             }
         }
         this.LoadAppointmentDisplay();
+    }
+    
+    private void ReportButtonClicked(object sender, RoutedEventArgs e)
+    {
+        using MySqlConnection connection = new MySqlConnection(MainWindow.ConnectionBuilder.ConnectionString);
+        connection.Open();
+        
+        
+        if ((string)ReportComboBox.SelectedItem == WGU_C969_Software_II_CS.Resources.MainWindow.ReportsComboBox_TypesPerMonth) //Number of appointment types per-month
+        {
+            List<(string month, int count)> outputs = new List<(string month, int count)>();
+            
+            using (MySqlCommand command = new MySqlCommand(@"
+SELECT
+    DATE_FORMAT(start, '%Y-%m') AS month,
+    COUNT(DISTINCT type) AS total
+FROM appointment
+GROUP BY month
+ORDER BY month;", connection))
+            {
+                using (MySqlDataReader reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        outputs.Add((reader.GetString("month"), reader.GetInt32("total"))); 
+                    }
+                }
+            }
+            
+            string filePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), $"TypesPerMonth.csv");
+            if (!File.Exists(filePath))
+            {
+                File.Create(filePath).Close();
+                File.AppendAllText(filePath, $"Month, Total" + Environment.NewLine);
+            }
+            Console.WriteLine(filePath);
+            
+            outputs.ForEach(output => File.AppendAllText(filePath, $"{output.month}, {output.count}" + Environment.NewLine));
+
+            MessageBox.Show($"{WGU_C969_Software_II_CS.Resources.MainWindow.ReportsComboBox_SuccessfullySaved}: {filePath}");
+        }
+        else if ((string)ReportComboBox.SelectedItem == WGU_C969_Software_II_CS.Resources.MainWindow.ReportsComboBox_UserSchedules) //All user schedules
+        {
+            List<(string name, string title, DateTime start, DateTime end)> outputs = new List<(string name, string title, DateTime start, DateTime end)>();
+            
+            using (MySqlCommand command = new MySqlCommand(@"
+SELECT
+    customer.customerName AS Name,
+    appointment.title AS Title,
+    appointment.start AS Start,
+    appointment.end AS End
+FROM customer
+INNER JOIN appointment
+    ON customer.customerId = appointment.customerId
+GROUP BY customer.customerName, appointment.title, appointment.start, appointment.end
+ORDER BY Name, Start
+", connection))
+            {
+                using (MySqlDataReader reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        outputs.Add(
+                            (
+                                reader.GetString("Name"), 
+                                reader.GetString("Title"), 
+                                reader.GetDateTime("Start"),
+                                reader.GetDateTime("End")
+                            )
+                        ); 
+                    }
+                }
+            }
+            
+            string filePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), $"ClientSchedule.csv");
+            if (!File.Exists(filePath))
+            {
+                File.Create(filePath).Close();
+                File.AppendAllText(filePath, $"ClientName, Title, Start, End" + Environment.NewLine);
+            }
+            Console.WriteLine(filePath);
+            
+            outputs.ForEach(output => File.AppendAllText(filePath, $"{output.name}, {output.title}, {output.start}, {output.end}" + Environment.NewLine));
+
+            MessageBox.Show($"{WGU_C969_Software_II_CS.Resources.MainWindow.ReportsComboBox_SuccessfullySaved}: {filePath}");
+        }
+        else if ((string)ReportComboBox.SelectedItem == WGU_C969_Software_II_CS.Resources.MainWindow.ReportComboBox_AverageAppointments) //Average Number of appointments per-month
+        {
+            List<int> outputs = new List<int>();
+            
+            using (MySqlCommand command = new MySqlCommand(@"
+SELECT AVG(monthly_count) AS avg_appointments_per_month
+FROM (
+    SELECT
+        DATE_FORMAT(start, '%Y-%m') AS month,
+        COUNT(*) AS monthly_count
+    FROM appointment
+    GROUP BY month
+    ORDER BY month
+) AS monthly_totals;", connection))
+            {
+                using (MySqlDataReader reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        outputs.Add(reader.GetInt32("avg_appointments_per_month")); 
+                    }
+                }
+            }
+            
+            string filePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), $"AverageAppointments.csv");
+            if (!File.Exists(filePath))
+            {
+                File.Create(filePath).Close();
+                File.AppendAllText(filePath, $"Average Per Month" + Environment.NewLine);
+            }
+            Console.WriteLine(filePath);
+            
+            outputs.ForEach(output => File.AppendAllText(filePath, $"{output.ToString()}" + Environment.NewLine));
+
+            MessageBox.Show($"{WGU_C969_Software_II_CS.Resources.MainWindow.ReportsComboBox_SuccessfullySaved}: {filePath}");
+        }
     }
     
     private void ListView_SizeChanged(object sender, SizeChangedEventArgs e)

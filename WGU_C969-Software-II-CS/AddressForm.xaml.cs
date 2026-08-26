@@ -128,6 +128,8 @@ public partial class AddressForm : INotifyPropertyChanged, IDatabaseInteraction
         {
             cities.Add(cityForm.ToCityRecord());
         }
+
+        cities = cities.OrderBy(city => city.CityName).ToList();
         
         this.CitiesComboBox.ItemsSource = cities;
     }

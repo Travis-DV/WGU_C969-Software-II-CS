@@ -346,6 +346,9 @@ public partial class AppointmentForm : INotifyPropertyChanged, IDatabaseInteract
                 this.Locations.Add(newLocation);
             }
         }
+
+        this.Types = this.Types.OrderBy(type => type.ToString()).ToList();
+        this.Locations = this.Locations.OrderBy(location => location.ToString()).ToList();
     }
     
     private void ReadContact()

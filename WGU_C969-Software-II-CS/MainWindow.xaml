@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="MainWindow" Height="600" Width="900">
+        Title="MainWindow" Height="600" Width="1000">
     <Window.Resources>
         <Style x:Key="ControlInError" TargetType="{x:Type Control}">
             <Style.Triggers>
@@ -116,59 +116,89 @@
             </Grid>
         </GroupBox>
         
-        
-        <!-- APPOINTMENT LIST GROUPBOX -->
         <GroupBox Grid.Row="0" Grid.Column="1" Grid.RowSpan="2" Margin="12, 5, 12, 2.5" Padding="0" BorderThickness="0">
             <Grid Margin="0">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="6*"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
+                <!-- APPOINTMENT LIST GROUPBOX -->
+                <GroupBox Grid.Row="0" Grid.Column="0" Margin="12, 5, 12, 2.5" Padding="0" BorderThickness="0">
+                    <Grid Margin="0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="6*"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        
+                        <ListView Grid.Row="0" 
+                            x:Name="AppointmentListView" 
+                            SizeChanged="ListView_SizeChanged"
+                            SelectedItem="{Binding SelectedAppointment}">
+                            <ListView.View>
+                                <GridView AllowsColumnReorder="True"
+                                          ColumnHeaderToolTip="Appointment Information">
+                                    <GridViewColumn 
+                                        x:Name="AppointmentIDColumn" 
+                                        Width="25"
+                                        Header="AppointmentIDColumn"
+                                        DisplayMemberBinding="{Binding ID}" />
+                                    <GridViewColumn 
+                                        x:Name="AppointmentStartTimeColumn" 
+                                        Width="25"
+                                        Header="AppointmentStartTimeColumn"
+                                        DisplayMemberBinding="{Binding StartTime}" />
+                                    <GridViewColumn 
+                                        x:Name="AppointmentTitleColumn" 
+                                        Header="AppointmentTitleColumn"
+                                        DisplayMemberBinding="{Binding AppointmentTitle}" />
+                                    <GridViewColumn 
+                                        x:Name="Detail" 
+                                        Header="Detail"
+                                        DisplayMemberBinding="{Binding Detail}"/>
+                                </GridView>
+                            </ListView.View>
+                        </ListView>
+                        
+                        <!-- APPOINTMENT LIST BUTTONS GROUPBOX -->
+                        <GroupBox Grid.Row="1" Grid.Column="0" Margin="12, 5, 12, 0" Padding="0" BorderThickness="0">
+                            <Grid Margin="0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                
+                                <Button Grid.Column="0" x:Name="AppointmentModButton"
+                                        Margin="20, 10"
+                                        Click="AppointmentModButtonClicked">ModButton</Button>
+                                <Button Grid.Column="1" x:Name="AppointmentDeleteButton"
+                                        Margin="20, 10"
+                                        Click="AppointmentDeleteButtonClicked">DeleteButton</Button>
+                                
+                            </Grid>
+                        </GroupBox>
+                    </Grid>
+                </GroupBox>
                 
-                <ListView Grid.Row="0" 
-                    x:Name="AppointmentListView" 
-                    SizeChanged="ListView_SizeChanged"
-                    SelectedItem="{Binding SelectedAppointment}">
-                    <ListView.View>
-                        <GridView AllowsColumnReorder="True"
-                                  ColumnHeaderToolTip="Appointment Information">
-                            <GridViewColumn 
-                                x:Name="AppointmentIDColumn" 
-                                Width="25"
-                                Header="AppointmentIDColumn"
-                                DisplayMemberBinding="{Binding ID}" />
-                            <GridViewColumn 
-                                x:Name="AppointmentStartTimeColumn" 
-                                Width="25"
-                                Header="AppointmentStartTimeColumn"
-                                DisplayMemberBinding="{Binding StartTime}" />
-                            <GridViewColumn 
-                                x:Name="AppointmentTitleColumn" 
-                                Header="AppointmentTitleColumn"
-                                DisplayMemberBinding="{Binding AppointmentTitle}" />
-                            <GridViewColumn 
-                                x:Name="Detail" 
-                                Header="Detail"
-                                DisplayMemberBinding="{Binding Detail}"/>
-                        </GridView>
-                    </ListView.View>
-                </ListView>
-                
-                <!-- APPOINTMENT LIST BUTTONS GROUPBOX -->
-                <GroupBox Grid.Row="1" Grid.Column="0" Margin="12, 5, 12, 0" Padding="0" BorderThickness="0">
+                <!--REPORTS GROUPBOX-->
+                <GroupBox Grid.Row="1" Grid.Column="0" Margin="12, 5, 12, 2.5" Padding="0" BorderThickness="0">
                     <Grid Margin="0">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="3*"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        
-                        <Button Grid.Column="0" x:Name="AppointmentModButton"
-                                Margin="20, 10"
-                                Click="AppointmentModButtonClicked">ModButton</Button>
-                        <Button Grid.Column="1" x:Name="AppointmentDeleteButton"
-                                Margin="20, 10"
-                                Click="AppointmentDeleteButtonClicked">DeleteButton</Button>
-                        
+                        <ComboBox x:Name="ReportComboBox"
+                                  Grid.Column="0" Grid.Row="0"
+                                  HorizontalAlignment="Stretch" VerticalAlignment="Center" 
+                                  Margin="2.5, 0, 5, 0" 
+                                  Padding="0, 5, 0, 2.5" 
+                                  Style="{StaticResource ControlInError}"
+                                  SelectedItem="{Binding SelectedReport}">
+                        </ComboBox>
+                        <Button x:Name="ReportButton"
+                                Grid.Column="1" Grid.Row="0" 
+                                Margin="2, 0"
+                                Padding="5"
+                                Click="ReportButtonClicked">ReportButton</Button>
                     </Grid>
                 </GroupBox>
             </Grid>

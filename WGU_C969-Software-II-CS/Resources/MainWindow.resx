@@ -93,4 +93,19 @@
     <data name="Error" xml:space="preserve">
         <value>Error</value>
     </data>
+    <data name="GenerateReportButton" xml:space="preserve">
+        <value>Generate Report</value>
+    </data>
+    <data name="ReportsComboBox_TypesPerMonth" xml:space="preserve">
+        <value>Number of appointment types per-month</value>
+    </data>
+    <data name="ReportsComboBox_UserSchedules" xml:space="preserve">
+        <value>All user schedules</value>
+    </data>
+    <data name="ReportComboBox_AverageAppointments" xml:space="preserve">
+        <value>Average Number of appointments per-month</value>
+    </data>
+    <data name="ReportsComboBox_SuccessfullySaved" xml:space="preserve">
+        <value>Successfully saved report to</value>
+    </data>
 </root>
