@@ -212,7 +212,7 @@ WHERE (@date IS NULL OR DATE(appointment.start) = @date)
     
     public MainWindow()
     {
-        /*if (this.ID == -1)
+        if (this.ID == -1)
         {
             LoginWindow loginWindow = new LoginWindow();
             loginWindow.ShowDialog();
@@ -223,10 +223,10 @@ WHERE (@date IS NULL OR DATE(appointment.start) = @date)
             }
             this.ID = loginWindow.ID;
             this.CurrentUsername = loginWindow.Username;
-        }*/ //TODO
+        }
 
-        this.ID = 0;
-        this.CurrentUsername = "Admin";
+        /*this.ID = 0;
+        this.CurrentUsername = "Admin";*/
         
         this.DataContext = this;
         InitializeComponent();
