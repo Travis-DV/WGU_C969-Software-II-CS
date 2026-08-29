@@ -84,8 +84,8 @@ public partial class CityForm : INotifyPropertyChanged, IDatabaseInteraction
             }
         }
 
-        this.CityNameLabel.Content = WGU_C969_Software_II_CS.Resources.CityFormLocal.CityNameLabel;
-        this.CountryLabel.Content = WGU_C969_Software_II_CS.Resources.CityFormLocal.CountryComboBoxLabel;
+        this.CityNameLabel.Content = WGU_C969_Software_II_CS.Resources.CityFormLocal.CityNameLabel + ":";
+        this.CountryLabel.Content = WGU_C969_Software_II_CS.Resources.CityFormLocal.CountryComboBoxLabel + ":";
         this.DoneButton.Content = WGU_C969_Software_II_CS.Resources.CustomerFormLocal.DoneButton;
     }
     

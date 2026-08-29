@@ -416,13 +416,12 @@ public partial class AppointmentForm : INotifyPropertyChanged, IDatabaseInteract
         
         URLLabel.Content = WGU_C969_Software_II_CS.Resources.AppointmentForm.URL;
         AppointmentTitleLabel.Content = WGU_C969_Software_II_CS.Resources.AppointmentForm.AppointmentTitle;
-        LocationLabel.Content = WGU_C969_Software_II_CS.Resources.AppointmentForm.Location;
-        ContactLabel.Content = WGU_C969_Software_II_CS.Resources.AppointmentForm.Contact;
-        TypeLabel.Content = WGU_C969_Software_II_CS.Resources.AppointmentForm.Type;
-        LocationLabel.Content = WGU_C969_Software_II_CS.Resources.AppointmentForm.Location;
+        LocationLabel.Content = WGU_C969_Software_II_CS.Resources.AppointmentForm.Location + ":";
+        ContactLabel.Content = WGU_C969_Software_II_CS.Resources.AppointmentForm.Contact + ":";
+        TypeLabel.Content = WGU_C969_Software_II_CS.Resources.AppointmentForm.Type + ":";
         DescriptionLabel.Content = WGU_C969_Software_II_CS.Resources.AppointmentForm.Description;
-        SelectStartTimeLabel.Content = WGU_C969_Software_II_CS.Resources.AppointmentForm.SelectStartTime;
-        SelectEndtTimeLabel.Content = WGU_C969_Software_II_CS.Resources.AppointmentForm.SelectEndTime;
+        SelectStartTimeLabel.Content = WGU_C969_Software_II_CS.Resources.AppointmentForm.SelectStartTime + ":";
+        SelectEndtTimeLabel.Content = WGU_C969_Software_II_CS.Resources.AppointmentForm.SelectEndTime + ":";
     }
     
     private void DoneButtonClicked(object sender, RoutedEventArgs e)

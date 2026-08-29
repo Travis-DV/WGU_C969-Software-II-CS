@@ -15,10 +15,8 @@ public partial class LoginWindow : Window
 
     private void Localize()
     {
-        this.UsernameLabel.Content = WGU_C969_Software_II_CS.Resources.MainWindow.UsernameLabel;
-        this.PasswordLabel.Content = WGU_C969_Software_II_CS.Resources.MainWindow.PasswordLabel;
-        this.CheatLabel.Content =
-            $"{WGU_C969_Software_II_CS.Resources.MainWindow.UsernameLabel}: Admin; {WGU_C969_Software_II_CS.Resources.MainWindow.PasswordLabel}: Admin";
+        this.UsernameLabel.Content = WGU_C969_Software_II_CS.Resources.MainWindow.UsernameLabel + ":";
+        this.PasswordLabel.Content = WGU_C969_Software_II_CS.Resources.MainWindow.PasswordLabel + ":";
     }
     
     public LoginWindow()

@@ -5,6 +5,7 @@ using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Security.Policy;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -212,6 +213,8 @@ WHERE (@date IS NULL OR DATE(appointment.start) = @date)
     
     public MainWindow()
     {
+        MainWindow.CheckCreation("Admin");
+        
         if (this.ID == -1)
         {
             LoginWindow loginWindow = new LoginWindow();
@@ -231,7 +234,7 @@ WHERE (@date IS NULL OR DATE(appointment.start) = @date)
         this.DataContext = this;
         InitializeComponent();
         
-        MainWindow.CheckCreation(this.CurrentUsername);
+        
 
         this.Customers = new List<CustomerForm>();
         using (MySqlConnection connection = new MySqlConnection(MainWindow.ConnectionBuilder.ConnectionString))
@@ -636,6 +639,25 @@ FROM (
         }
     }
 
+    private static bool CheckTableEmpty(string table)
+    {
+        using MySqlConnection connection = new MySqlConnection(ConnectionBuilder.ConnectionString);
+        connection.Open();
+        
+        bool output = false;
+        using (MySqlCommand command =
+               new MySqlCommand($"SELECT NOT EXISTS (SELECT 1 FROM {table} LIMIT 1) AS is_empty;", connection))
+        {
+            MySqlDataReader reader = command.ExecuteReader();
+            if (reader.Read())
+            {
+                output = reader.GetInt64("is_empty") == 1;
+            }
+        }
+
+        return output;
+    } 
+    
     public static readonly MySqlConnectionStringBuilder ConnectionBuilder = new MySqlConnectionStringBuilder
     {
         Server = "localhost",
@@ -720,35 +742,43 @@ FROM (
             databaseTables = databaseTablesString.Split(',');
         }
         
-        
         if (!databaseTables.Contains("country"))
         {
             Console.WriteLine("Generating country Table");
-            using (MySqlCommand command = new MySqlCommand(
-                             @"
+            using (MySqlCommand command = new MySqlCommand
+                (
+                    @"
                         CREATE TABLE country 
-                       (
-                           countryId INTEGER PRIMARY KEY, 
-                           country VARCHAR(50), 
-                           createDate DATETIME, 
-                           createdBy VARCHAR(40),
-                           lastUpdate TIMESTAMP, 
-                           lastUpdateBy VARCHAR(40)
-                       )", 
-                             connection)
+                        (
+                            countryId INTEGER PRIMARY KEY, 
+                            country VARCHAR(50), 
+                            createDate DATETIME, 
+                            createdBy VARCHAR(40),
+                            lastUpdate TIMESTAMP, 
+                            lastUpdateBy VARCHAR(40)
                         )
+                    ", 
+                    connection
+                )
+            )
             {
                 command.ExecuteNonQuery();
             }
-            
-            using (MySqlCommand command = new MySqlCommand(
-                                     @"
-                                        INSERT INTO country 
-                                            (countryId, country, createDate, createdBy, lastUpdate, lastUpdateBy)
-                                        VALUES 
-                                            (@countryId, @country, @createDate, @createdBy, @lastUpdate, @lastUpdateBy)",
-                                     connection)
-                                 )
+        }
+        
+        if (MainWindow.CheckTableEmpty("country"))
+        {
+            using (MySqlCommand command = new MySqlCommand
+                (
+                    @"
+                        INSERT INTO country 
+                            (countryId, country, createDate, createdBy, lastUpdate, lastUpdateBy)
+                        VALUES 
+                            (@countryId, @country, @createDate, @createdBy, @lastUpdate, @lastUpdateBy)
+                    ",
+                    connection
+                )
+            )
             {
                 command.Parameters.AddWithValue("@countryId", "0");
                 command.Parameters.AddWithValue("@country", "USA");
@@ -759,14 +789,17 @@ FROM (
     
                 command.ExecuteNonQuery();
             }
-            using (MySqlCommand command = new MySqlCommand(
-                             @"
-                                        INSERT INTO country 
-                                            (countryId, country, createDate, createdBy, lastUpdate, lastUpdateBy)
-                                        VALUES 
-                                            (@countryId, @country, @createDate, @createdBy, @lastUpdate, @lastUpdateBy)",
-                             connection)
-                        )
+            using (MySqlCommand command = new MySqlCommand
+                (
+                    @"
+                        INSERT INTO country 
+                            (countryId, country, createDate, createdBy, lastUpdate, lastUpdateBy)
+                        VALUES 
+                            (@countryId, @country, @createDate, @createdBy, @lastUpdate, @lastUpdateBy)
+                    ",
+                    connection
+                )
+            )
             {
                 command.Parameters.AddWithValue("@countryId", "1");
                 command.Parameters.AddWithValue("@country", "Spain");
@@ -777,6 +810,7 @@ FROM (
     
                 command.ExecuteNonQuery();
             }
+            
             using (MySqlCommand command = new MySqlCommand("SELECT * FROM  country", connection))
             {
                 using var reader = command.ExecuteReader();
@@ -797,21 +831,24 @@ FROM (
         if (!databaseTables.Contains("city"))
         {
             Console.WriteLine("Generating city Table");
-            using (MySqlCommand command = new MySqlCommand(
-                             @"
-                            CREATE TABLE city 
-                            (
-                                cityId INTEGER PRIMARY KEY, 
-                                city VARCHAR(50), 
-                                countryId INTEGER,
-                                createDate DATETIME, 
-                                createdBy VARCHAR(40),
-                                lastUpdate TIMESTAMP, 
-                                lastUpdateBy VARCHAR(40),
-                                FOREIGN KEY (countryId) REFERENCES country(countryId) 
-                            )", 
-                             connection)
+            using (MySqlCommand command = new MySqlCommand
+                (
+                    @"
+                        CREATE TABLE city 
+                        (
+                            cityId INTEGER PRIMARY KEY, 
+                            city VARCHAR(50), 
+                            countryId INTEGER,
+                            createDate DATETIME, 
+                            createdBy VARCHAR(40),
+                            lastUpdate TIMESTAMP, 
+                            lastUpdateBy VARCHAR(40),
+                            FOREIGN KEY (countryId) REFERENCES country(countryId) 
                         )
+                    ", 
+                    connection
+                )
+            )
             {
                 command.ExecuteNonQuery();
             }
@@ -820,24 +857,27 @@ FROM (
         if (!databaseTables.Contains("address"))
         {
             Console.WriteLine("Generating address Table");
-            using (MySqlCommand command = new MySqlCommand(
-                             @"
-                            CREATE TABLE address 
-                            (
-                                addressId INTEGER PRIMARY KEY, 
-                                address VARCHAR(50), 
-                                address2 VARCHAR(50),
-                                cityId INTEGER,
-                                postalCode VARCHAR(10),
-                                phone VARCHAR(20),
-                                createDate DATETIME, 
-                                createdBy VARCHAR(40),
-                                lastUpdate TIMESTAMP, 
-                                lastUpdateBy VARCHAR(40),
-                                FOREIGN KEY (cityId) REFERENCES city(cityId) 
-                            )", 
-                             connection)
+            using (MySqlCommand command = new MySqlCommand
+                (
+                    @"
+                        CREATE TABLE address 
+                        (
+                            addressId INTEGER PRIMARY KEY, 
+                            address VARCHAR(50), 
+                            address2 VARCHAR(50),
+                            cityId INTEGER,
+                            postalCode VARCHAR(10),
+                            phone VARCHAR(20),
+                            createDate DATETIME, 
+                            createdBy VARCHAR(40),
+                            lastUpdate TIMESTAMP, 
+                            lastUpdateBy VARCHAR(40),
+                            FOREIGN KEY (cityId) REFERENCES city(cityId) 
                         )
+                    ", 
+                    connection
+                )
+            )
             {
                 command.ExecuteNonQuery();
             }
@@ -846,22 +886,25 @@ FROM (
         if (!databaseTables.Contains("customer"))
         {
             Console.WriteLine("Generating customer Table");
-            using (MySqlCommand command = new MySqlCommand(
-                             @"
-                            CREATE TABLE customer 
-                            (
-                                customerId INTEGER PRIMARY KEY, 
-                                customerName VARCHAR(45), 
-                                addressId INTEGER,
-                                active TINYINT(1), 
-                                createDate DATETIME, 
-                                createdBy VARCHAR(40),
-                                lastUpdate TIMESTAMP, 
-                                lastUpdateBy VARCHAR(40),
-                                FOREIGN KEY (addressId) REFERENCES address(addressId) 
-                            )", 
-                             connection)
+            using (MySqlCommand command = new MySqlCommand
+                (
+                    @"
+                        CREATE TABLE customer 
+                        (
+                            customerId INTEGER PRIMARY KEY, 
+                            customerName VARCHAR(45), 
+                            addressId INTEGER,
+                            active TINYINT(1), 
+                            createDate DATETIME, 
+                            createdBy VARCHAR(40),
+                            lastUpdate TIMESTAMP, 
+                            lastUpdateBy VARCHAR(40),
+                            FOREIGN KEY (addressId) REFERENCES address(addressId) 
                         )
+                    ", 
+                    connection
+                )
+            )
             {
                 command.ExecuteNonQuery();
             }
@@ -870,22 +913,51 @@ FROM (
         if (!databaseTables.Contains("user"))
         {
             Console.WriteLine("Generating user Table");
-            using (MySqlCommand command = new MySqlCommand(
-                             @"
-                            CREATE TABLE user 
-                            (
-                                userId INTEGER PRIMARY KEY, 
-                                userName VARCHAR(50), 
-                                password VARCHAR(50),
-                                active TINYINT(1), 
-                                createDate DATETIME, 
-                                createdBy VARCHAR(40),
-                                lastUpdate TIMESTAMP, 
-                                lastUpdateBy VARCHAR(40)
-                            )", 
-                             connection)
+            using (MySqlCommand command = new MySqlCommand
+                (
+                    @"
+                        CREATE TABLE user 
+                        (
+                            userId INTEGER PRIMARY KEY, 
+                            userName VARCHAR(50), 
+                            password VARCHAR(50),
+                            active TINYINT(1), 
+                            createDate DATETIME, 
+                            createdBy VARCHAR(40),
+                            lastUpdate TIMESTAMP, 
+                            lastUpdateBy VARCHAR(40)
                         )
+                    ", 
+                    connection
+                )
+            )
             {
+                command.ExecuteNonQuery();
+            }
+        }
+        
+        if (MainWindow.CheckTableEmpty("user"))
+        {
+            using (MySqlCommand command = new MySqlCommand
+                (
+                    @"
+                        INSERT INTO user 
+                            (userId, userName, password, createDate, createdBy, lastUpdate, lastUpdateBy)
+                        VALUES 
+                            (@userId, @userName, @password, @createDate, @createdBy, @lastUpdate, @lastUpdateBy)
+                    ",
+                   connection
+                )
+            )
+            {
+                command.Parameters.AddWithValue("@userId", "0");
+                command.Parameters.AddWithValue("@userName", "test");
+                command.Parameters.AddWithValue("@password", "test");
+                command.Parameters.AddWithValue("@createDate", DateTime.Now);
+                command.Parameters.AddWithValue("@createdBy", currentUsername);
+                command.Parameters.AddWithValue("@lastUpdate", DateTime.Now);
+                command.Parameters.AddWithValue("@lastUpdateBy", currentUsername);
+    
                 command.ExecuteNonQuery();
             }
         }
