@@ -326,8 +326,8 @@ public partial class AppointmentForm : INotifyPropertyChanged, IDatabaseInteract
     
     private void ReadTypesAndLocations()
     {
-        this.Types = new List<string>();
-        this.Locations = new List<string>();
+        this.Types = new List<string>() {"Appointment Type One", "Appointment Type Two"};
+        this.Locations = new List<string>() {"Appointment Location One", "Appointment Location Two"};
         
         using MySqlConnection connection = new MySqlConnection(MainWindow.ConnectionBuilder.ConnectionString);
         connection.Open();
